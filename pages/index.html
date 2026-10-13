@@ -16,7 +16,11 @@
       import demo from "/js/demo.js";
 
       window.$ = vibe({ harness: "claude", demo });
-      $.on("ready", code);
+      // The sections render after load, so the browser's own jump to the hash finds nothing
+      $.on("ready", () => {
+        code();
+        document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: "instant" });
+      });
     </script>
   </head>
 
