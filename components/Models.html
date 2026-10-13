@@ -1,0 +1,93 @@
+<site-section id="models">
+  <section-head>
+    <h2>Pick the model</h2>
+    <p>
+      Each reviewer and the judge is one string in <code>underlens.config.js</code>. A harness id alone runs that CLI's
+      default model. A model ID picks that model, and the start of the ID picks the harness. The same harness can
+      review more than once, on different models.
+    </p>
+  </section-head>
+
+  <codie dark>export default {
+  reviewers: ['claude-opus-5-5', 'gpt-6.1-sol', 'claude-sonnet-5'],
+  judge: 'claude-fable-5-1',
+};</codie>
+
+  <p>
+    These are the strings each CLI's own docs list as of October 2026. The model ID goes to the CLI exactly as you
+    write it, so the CLI and your plan decide what actually runs: a newer ID works the day the CLI takes it, and one
+    it has retired fails validation. A string that starts with no harness id stops the run before anything is
+    reviewed.
+  </p>
+
+  <model-grid>
+    <harness-card>
+      <harness-head><h3>Claude</h3></harness-head>
+      <model-list>
+        <code>claude</code><code>claude-fable-5-1</code><code>claude-fable-5</code><code>claude-opus-5-5</code>
+        <code>claude-opus-5</code><code>claude-opus-4-8</code><code>claude-opus-4-7</code><code>claude-opus-4-6</code>
+        <code>claude-sonnet-5-5</code><code>claude-sonnet-5</code><code>claude-sonnet-4-6</code>
+        <code>claude-sonnet-4-5</code><code>claude-haiku-5-5</code><code>claude-haiku-4-5</code>
+      </model-list>
+      <p fine>
+        Passed to Claude Code as <code>--model</code>. Aliases like <code>opus</code> don't start with
+        <code>claude</code>, so name the full ID.
+        <a href="https://code.claude.com/docs/en/model-config" target="_blank" rel="noopener" secondary>Claude Code docs</a>
+      </p>
+    </harness-card>
+
+    <harness-card>
+      <harness-head><h3>GPT</h3></harness-head>
+      <model-list>
+        <code>gpt</code><code>gpt-6-astra</code><code>gpt-6.1-sol</code><code>gpt-6-luna</code><code>gpt-5.6-sol</code>
+        <code>gpt-5.6-terra</code><code>gpt-5.6-luna</code>
+      </model-list>
+      <p fine>
+        Passed to Codex as <code>-m</code>. The <code>gpt-5.6</code> models stay only while the rollout lasts, and
+        <code>gpt-5.5</code> leaves Codex on October 14, 2026.
+        <a href="https://learn.chatgpt.com/docs/models" target="_blank" rel="noopener" secondary>Codex docs</a>
+      </p>
+    </harness-card>
+
+    <harness-card>
+      <harness-head><h3>GLM</h3></harness-head>
+      <model-list><code>glm</code><code>glm-5.3</code><code>glm-5.3-flash</code></model-list>
+      <p fine>
+        The Coding Plan serves these two models only. Plain <code>glm</code> runs GLM-5.3, and GLM-5.3-Flash for
+        Claude Code's light tasks. A named model runs everything.
+        <a href="https://docs.z.ai/devpack/faq" target="_blank" rel="noopener" secondary>Z.ai docs</a>
+      </p>
+    </harness-card>
+
+    <harness-card>
+      <harness-head><h3>Gemini</h3></harness-head>
+      <model-list>
+        <code>gemini</code><code>gemini-3-pro-preview</code><code>gemini-3-flash-preview</code>
+        <code>gemini-2.5-pro</code><code>gemini-2.5-flash</code>
+      </model-list>
+      <p fine>
+        Passed to Gemini CLI as <code>-m</code>. Plain <code>gemini</code> runs the CLI's default. The preview models
+        may need preview access on your key.
+        <a href="https://geminicli.com/docs/cli/model/" target="_blank" rel="noopener" secondary>Gemini CLI docs</a>
+      </p>
+    </harness-card>
+
+    <harness-card>
+      <harness-head><h3>Grok</h3></harness-head>
+      <model-list>
+        <code>grok</code><code>grok-4.7</code><code>grok-4.6</code><code>grok-4.5</code><code>grok-4.3</code>
+        <code>grok-4.20-0309-reasoning</code><code>grok-4.20-0309-non-reasoning</code><code>grok-build-0.1</code>
+      </model-list>
+      <p fine>
+        Passed to the Grok CLI as <code>-m</code>. xAI lists these for its API. Run <code>grok models</code> to see
+        which ones your key can reach.
+        <a href="https://docs.x.ai/developers/models" target="_blank" rel="noopener" secondary>xAI docs</a>
+      </p>
+    </harness-card>
+  </model-grid>
+
+  <p>
+    Check the strings before a real run: run the workflow with no PR number (<a href="#validate" primary>see how</a>).
+    It pings each string on its own harness and model, so a model the CLI rejects shows up in its own row.
+  </p>
+</site-section>

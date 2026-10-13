@@ -1,7 +1,7 @@
 import { $ } from 'bun';
 
 import config, { names } from './config.js';
-import harnesses from './harnesses.js';
+import { label } from './harnesses.js';
 import { fixPrompt, judgePrompt, json, reviewPrompt, run } from './agents.js';
 import { close, deleteBranch, openPull, openPulls, pull, runUrl, setBody, summary } from './github.js';
 import { announcement, report, state, write } from './section.js';
@@ -38,7 +38,7 @@ const fix = async (pr, point, i, cfg) => {
   const umbrella = umbrellaOf(pr.number);
   const branch = `${umbrella}-rule-${point.rule}-${i + 1}`;
   await $`git reset -q --hard && git clean -qfd && git checkout -q -B ${branch} ${umbrella}`;
-  await run(cfg.judge, fixPrompt({ pr, rules: cfg.rules, point }), { write: true, model: cfg.models[cfg.judge] });
+  await run(cfg.judge, fixPrompt({ pr, rules: cfg.rules, point }), { write: true });
   await $`git add -A`;
   if (!(await $`git diff --cached --quiet`.nothrow()).exitCode) return { ...point, fix: null, outcome: 'nofix' };
   await $`git commit -qm ${`Rule ${point.rule}: ${point.title}`} && git push -qf origin ${branch}`;
@@ -51,8 +51,8 @@ const fix = async (pr, point, i, cfg) => {
   return { ...point, fix: number, outcome: 'open' };
 };
 
-const findings = (id, list) =>
-  `<details><summary>${harnesses[id].name}: ${list.length} finding${list.length === 1 ? '' : 's'}</summary>\n\n\`\`\`json\n${JSON.stringify(list, null, 2)}\n\`\`\`\n</details>`;
+const findings = (spec, list) =>
+  `<details><summary>${label(spec)}: ${list.length} finding${list.length === 1 ? '' : 's'}</summary>\n\n\`\`\`json\n${JSON.stringify(list, null, 2)}\n\`\`\`\n</details>`;
 
 export const review = async (n) => {
   const [cfg, pr] = await Promise.all([config(), pull(n)]);
@@ -64,11 +64,11 @@ export const review = async (n) => {
 
   summary(`## #${n} ${pr.title}`);
   const reports = Object.fromEntries(
-    await Promise.all(cfg.reviewers.map(async (id) => [id, json(await run(id, reviewPrompt({ pr, rules: cfg.rules, diff }), { model: cfg.models[id] })).findings])),
+    await Promise.all(cfg.reviewers.map(async (spec) => [spec, json(await run(spec, reviewPrompt({ pr, rules: cfg.rules, diff }))).findings])),
   );
-  Object.entries(reports).forEach(([id, list]) => summary(findings(id, list)));
+  Object.entries(reports).forEach(([spec, list]) => summary(findings(spec, list)));
 
-  const { points } = json(await run(cfg.judge, judgePrompt({ pr, rules: cfg.rules, reports }), { model: cfg.models[cfg.judge] }));
+  const { points } = json(await run(cfg.judge, judgePrompt({ pr, rules: cfg.rules, reports })));
   summary(`Judged by ${names([cfg.judge])}: ${points.length} point${points.length === 1 ? '' : 's'}`);
 
   const data = { sha: pr.headRefOid, run: runUrl, reviewers: cfg.reviewers, judge: cfg.judge, umbrella: { branch: umbrellaOf(n), pr: null }, points: [] };

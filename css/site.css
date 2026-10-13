@@ -425,6 +425,19 @@ harness-card {
   background: var(--card);
 }
 
+model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: calc(var(--unit) * 4);
+}
+
+model-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--unit) * 2);
+  font-size: 13px;
+}
+
 harness-card[hidden] {
   display: none;
 }
@@ -456,6 +469,7 @@ codie {
 
 setup-step {
   max-width: 760px;
+  scroll-margin-top: calc(var(--unit) * 8);
   padding-top: calc(var(--unit) * 6);
   border-top: 1px solid var(--border);
 }

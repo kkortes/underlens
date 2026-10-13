@@ -22,7 +22,7 @@ const claudeCode = ({ write, model }) => [
 // `subscription: false` marks the harnesses whose vendor offers no
 // subscription sign-in for CI — they run on an API key, said plainly
 // everywhere they show up.
-export default {
+const harnesses = {
   claude: {
     name: 'Claude',
     secret: 'CLAUDE_CODE_OAUTH_TOKEN',
@@ -88,17 +88,35 @@ export default {
     secret: 'GLM_API_KEY',
     subscription: true,
     // Z.ai's Coding Plan runs inside Claude Code against Z.ai's
-    // Anthropic-compatible endpoint, so a Claude token must not leak in.
-    env: ({ CLAUDE_CODE_OAUTH_TOKEN, ANTHROPIC_API_KEY, ...env }) => ({
+    // Anthropic-compatible endpoint, so a Claude token must not leak in. Z.ai
+    // documents picking the model only through Claude Code's default-model
+    // mapping, so a chosen model fills all three instead of `--model`.
+    env: ({ CLAUDE_CODE_OAUTH_TOKEN, ANTHROPIC_API_KEY, ...env }, model) => ({
       ...env,
       ANTHROPIC_BASE_URL: 'https://api.z.ai/api/anthropic',
       ANTHROPIC_AUTH_TOKEN: env.GLM_API_KEY,
-      ANTHROPIC_DEFAULT_OPUS_MODEL: 'glm-5.3',
-      ANTHROPIC_DEFAULT_SONNET_MODEL: 'glm-5.3',
-      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'glm-5.3-flash',
+      ANTHROPIC_DEFAULT_OPUS_MODEL: model ?? 'glm-5.3',
+      ANTHROPIC_DEFAULT_SONNET_MODEL: model ?? 'glm-5.3',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: model ?? 'glm-5.3-flash',
       API_TIMEOUT_MS: '3000000',
       CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
     }),
-    command: claudeCode,
+    command: ({ write }) => claudeCode({ write }),
   },
+};
+
+export default harnesses;
+
+// Reviewers and the judge are one string each. Every vendor's model IDs start
+// with its harness id, so `claude-opus-5-5` reaches its CLI whole as the model
+// (GLM: as its default-model mapping) and a bare `claude` keeps the CLI's
+// default.
+export const agent = (spec) => {
+  const id = Object.keys(harnesses).find((id) => spec === id || spec.startsWith(`${id}-`));
+  return id && { id, harness: harnesses[id], model: spec === id ? undefined : spec };
+};
+
+export const label = (spec) => {
+  const { harness, model } = agent(spec);
+  return model ?? harness.name;
 };

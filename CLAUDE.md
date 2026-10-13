@@ -36,15 +36,26 @@ dispatches on `GITHUB_EVENT_NAME` (or `init` / `validate` by name).
 
 - [config.js](package/src/config.js) — loads `underlens.config.js` and the
   quality document from the workflow's checkout (default branch on schedule and
-  dispatch). The workflow's triggers alone decide when reviews run; a config
-  that still sets `when` throws.
-- [harnesses.js](package/src/harnesses.js) — one adapter per harness: its
+  dispatch). The workflow's triggers alone decide when reviews run, and each
+  `reviewers` / `judge` string alone picks harness and model; a config that
+  still sets `when` or `models` throws, and so does a string whose prefix
+  names no harness.
+- Reviewer / judge strings: a bare harness id (`'claude'`) runs its CLI's
+  default model; `<id>-…` (`'claude-opus-5-5'`, `'gpt-6.1-sol'`,
+  `'glm-5.3-flash'`) passes through whole as the model flag, since every
+  vendor's model IDs start with the harness id. Everything downstream is keyed
+  by the string, not the harness, so one harness can review on two models.
+  The accepted strings per CLI are listed on the site (`#models`).
+- [harnesses.js](package/src/harnesses.js) — `agent(spec)` resolves a
+  config string to harness and model; one adapter per harness: its
   secret, whether that's a subscription, and the headless CLI command for
   read-only review and write-mode fixes. Prompts go in on stdin (Grok: a
   prompt file). Verified locally against Claude Code 2.1.280, Codex 0.159.1
   and Grok 1.0.50: Grok's `dontAsk` cancels the turn on any denied tool, so it
   gets an explicit `--tools` list, and its plain output stops at the first
   message, so it runs with `--output-format json`.
+- [validate.js](package/src/validate.js) — dispatch without a PR number: one
+  row per configured string, each pinged on that exact harness and model.
 - [agents.js](package/src/agents.js) — spawn, JSON extraction and the
   review / judge / fix prompts.
 - [review.js](package/src/review.js) — opened, scheduled, review. A review

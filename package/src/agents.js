@@ -1,22 +1,24 @@
 import { tmpdir } from 'os';
 
-import harnesses from './harnesses.js';
+import { agent } from './harnesses.js';
 
 const minutes = (n) => n * 60_000;
 
-export const run = async (id, prompt, { write = false, model, timeout = minutes(30) } = {}) => {
-  const harness = harnesses[id];
+// `spec` is a reviewer or judge string from the config: it names the harness
+// and the model both.
+export const run = async (spec, prompt, { write = false, timeout = minutes(30) } = {}) => {
+  const { id, harness, model } = agent(spec);
   await harness.prepare?.();
   const out = `${process.env.RUNNER_TEMP ?? tmpdir()}/underlens-${id}-${crypto.randomUUID()}.txt`;
   const proc = Bun.spawn(harness.command({ write, model, out, prompt }), {
     stdin: new Blob([prompt]),
     stdout: 'pipe',
     stderr: 'pipe',
-    env: harness.env?.(process.env) ?? process.env,
+    env: harness.env?.(process.env, model) ?? process.env,
     timeout,
   });
   const [stdout, stderr, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
-  if (code || proc.signalCode) throw new Error(`${harness.name} exited ${code}${proc.signalCode ? ` (${proc.signalCode})` : ''}: ${(stderr || stdout).trim().slice(-2000)}`);
+  if (code || proc.signalCode) throw new Error(`${spec} exited ${code}${proc.signalCode ? ` (${proc.signalCode})` : ''}: ${(stderr || stdout).trim().slice(-2000)}`);
   return harness.output ? harness.output(stdout, out) : stdout;
 };
 
@@ -24,7 +26,7 @@ export const run = async (id, prompt, { write = false, model, timeout = minutes(
 // read as the outermost object in whatever they said.
 export const json = (text) => JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
 
-export const ping = (id, model) => run(id, 'Reply with the single word READY and nothing else.', { model, timeout: minutes(4) });
+export const ping = (spec) => run(spec, 'Reply with the single word READY and nothing else.', { timeout: minutes(4) });
 
 const context = ({ pr, rules }) => `Pull request #${pr.number} "${pr.title}" in this repository. The working directory is the pull request's head.
 
@@ -62,7 +64,7 @@ Consolidate them into points. Do not edit any file.
 - Title each point after its rule and its place, plainly, so the same drift reads the same on every review.
 
 Answer with JSON only, nothing around it:
-{"points":[{"rule":4,"title":"No defensive checks in src/app.js","file":"src/app.js","line":12,"detail":"one or two sentences","fix":"the concrete change","raisedBy":["claude","gpt"]}]}
+{"points":[{"rule":4,"title":"No defensive checks in src/app.js","file":"src/app.js","line":12,"detail":"one or two sentences","fix":"the concrete change","raisedBy":["claude-opus-5-5","gpt"]}]}
 An empty points list is a valid answer.`;
 
 export const fixPrompt = ({ pr, rules, point }) => `You are applying one Underlens fix. ${context({ pr, rules })}
