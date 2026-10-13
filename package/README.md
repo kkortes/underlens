@@ -4,6 +4,8 @@ Nightly code review held to rules you wrote, run from a GitHub workflow on your 
 
 The workflow's triggers decide when a PR is reviewed. Then one reviewer per configured harness reads `underlens-quality-control.md`, the diff and the codebase, and reports where the PR breaks a numbered rule. A judge folds the reports into points and writes one fix PR per point, into an umbrella branch cut from the PR. The PR's section becomes a status report with **Agree** (merge the fix) and **Disagree** (close it) per point. A disagreed point returns on every review while its rule stands; only changing the code or the rule settles it.
 
+A reviewer that fails (its CLI won't start, exits with an error, runs past 30 minutes or answers without JSON) doesn't stop the review: the judge works from the reviewers that answered, and the PR's section names each one that failed and why, on one line each. If every reviewer fails, or the judge does, that PR isn't reviewed: an earlier review stays in place, and a PR without one gets a note saying it failed. A scheduled run moves on to the next PR either way. Any failure turns the run red.
+
 ## Setup
 
 ```sh

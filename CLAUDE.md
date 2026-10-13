@@ -59,10 +59,15 @@ dispatches on `GITHUB_EVENT_NAME` (or `init` / `validate` by name).
 - [agents.js](package/src/agents.js) — spawn, JSON extraction and the
   review / judge / fix prompts.
 - [review.js](package/src/review.js) — opened, scheduled, review. A review
-  retires leftovers of the last one, checks out the PR head as
-  `underlens/pr-N`, runs reviewers in parallel, the judge, then one fix per
-  point on `underlens/pr-N-rule-R-i` with a PR into `underlens/pr-N`. Reports
-  land in the job summary; the PR section is rewritten last.
+  checks out the PR head as `underlens/pr-N`, runs reviewers in parallel and
+  each settles on its own, then the judge on whichever answered. Only then
+  does it retire leftovers of the last review, and writes one fix per point on
+  `underlens/pr-N-rule-R-i` with a PR into `underlens/pr-N`. Reports land in
+  the job summary; the PR section is rewritten last and names each failed
+  reviewer on one line. No reviewer answering, or the judge failing, fails
+  that PR: an earlier review stays, a PR without one gets a stateless failure
+  note. The scheduled loop moves on past a failed PR and throws at the end, so
+  any failure ends the run red.
 - [section.js](package/src/section.js) — the PR section between
   `<!-- underlens -->` markers; its state rides in a base64 comment. A section
   with state means reviewed: the scheduled run skips it.

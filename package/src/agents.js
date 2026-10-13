@@ -10,6 +10,7 @@ export const run = async (spec, prompt, { write = false, timeout = minutes(30) }
   const { id, harness, model } = agent(spec);
   await harness.prepare?.();
   const out = `${process.env.RUNNER_TEMP ?? tmpdir()}/underlens-${id}-${crypto.randomUUID()}.txt`;
+  const start = Date.now();
   const proc = Bun.spawn(harness.command({ write, model, out, prompt }), {
     stdin: new Blob([prompt]),
     stdout: 'pipe',
@@ -18,7 +19,8 @@ export const run = async (spec, prompt, { write = false, timeout = minutes(30) }
     timeout,
   });
   const [stdout, stderr, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
-  if (code || proc.signalCode) throw new Error(`${spec} exited ${code}${proc.signalCode ? ` (${proc.signalCode})` : ''}: ${(stderr || stdout).trim().slice(-2000)}`);
+  const ended = Date.now() - start >= timeout ? `timed out after ${timeout / minutes(1)} minutes` : `exited ${code ?? proc.signalCode}`;
+  if (code || proc.signalCode) throw new Error(`${spec} ${ended}:\n${(stderr || stdout).trim().slice(-2000)}`);
   return harness.output ? harness.output(stdout, out) : stdout;
 };
 

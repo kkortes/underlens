@@ -1,4 +1,5 @@
 import { names } from './config.js';
+import { label } from './harnesses.js';
 import { repo, runUrl } from './github.js';
 
 // The section is fenced by hidden markers so it can be replaced wholesale
@@ -32,9 +33,15 @@ const outcome = (point, data) =>
     nofix: ' — no fix written; this one needs a person.',
   })[point.outcome];
 
+// Written without state, so the PR still counts as unreviewed.
+export const failure = (pr, reason) =>
+  `Underlens couldn't review \`${pr.headRefOid.slice(0, 7)}\` · [run](${runUrl}): ${reason}\n\nA scheduled run tries again, or run the workflow with this PR's number.`;
+
+const failures = (data) => (data.failed ?? []).map(({ spec, reason }) => `\n- ${label(spec)} failed: ${reason}`).join('');
+
 export const report = (pr, data) => {
   const { points } = data;
-  const head = `Reviewed \`${data.sha.slice(0, 7)}\` ${team(data)}, against ${rulesLink(pr)} · [run](${data.run})`;
+  const head = `Reviewed \`${data.sha.slice(0, 7)}\` ${team(data)}, against ${rulesLink(pr)} · [run](${data.run})${failures(data)}`;
   if (!points.length) return `${head}\n\nNothing in this PR breaks the quality document.`;
   const list = points
     .map((point, i) => `${i + 1}. **Rule ${point.rule} · ${point.title}**${point.line ? ` (\`${point.file}:${point.line}\`)` : ''} — ${point.detail}${point.fix ? ` Fix: #${point.fix}` : ''}${outcome(point, data)}`)

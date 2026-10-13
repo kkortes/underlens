@@ -4,7 +4,7 @@ import config, { names } from './config.js';
 import { label } from './harnesses.js';
 import { fixPrompt, judgePrompt, json, reviewPrompt, run } from './agents.js';
 import { close, deleteBranch, openPull, openPulls, pull, runUrl, setBody, summary } from './github.js';
-import { announcement, report, state, write } from './section.js';
+import { announcement, failure, report, state, write } from './section.js';
 
 export const umbrellaOf = (n) => `underlens/pr-${n}`;
 const own = (pr) => pr.headRefName.startsWith('underlens/');
@@ -23,10 +23,13 @@ export const opened = async (n) => {
 export const scheduled = async () => {
   const due = (await openPulls()).filter((pr) => reviewable(pr) && !pr.isDraft && !state(pr.body));
   console.info(due.length ? `Reviewing ${due.map((pr) => `#${pr.number}`).join(', ')}` : 'No open PR waits for a review');
-  for (const pr of due) await review(pr.number);
+  // One PR failing leaves the rest to their own review; the run still ends red.
+  const failed = [];
+  for (const pr of due) await review(pr.number).catch((error) => failed.push(`#${pr.number}: ${error.message}`));
+  if (failed.length) throw new Error(`Underlens failed on ${failed.length} of ${due.length} PRs:\n${failed.join('\n')}`);
 };
 
-// A review starts from scratch: whatever an earlier review left open goes.
+// A review replaces the last one: whatever the earlier review left open goes.
 export const retire = async (n) => {
   const umbrella = umbrellaOf(n);
   const leftovers = (await openPulls()).filter((pr) => pr.headRefName.startsWith(`${umbrella}-`) || pr.headRefName === umbrella);
@@ -54,27 +57,52 @@ const fix = async (pr, point, i, cfg) => {
 const findings = (spec, list) =>
   `<details><summary>${label(spec)}: ${list.length} finding${list.length === 1 ? '' : 's'}</summary>\n\n\`\`\`json\n${JSON.stringify(list, null, 2)}\n\`\`\`\n</details>`;
 
-export const review = async (n) => {
-  const [cfg, pr] = await Promise.all([config(), pull(n)]);
-  if (!reviewable(pr)) throw new Error(`#${n} comes from a fork or from Underlens itself — Underlens reviews branches of this repository`);
-  await retire(n);
+// One line per failure: how the agent ended, then the last thing it said.
+const reason = ({ message }) => {
+  const [head, ...said] = message.split('\n').map((line) => line.trim()).filter(Boolean);
+  return said.length ? `${head} ${said.at(-1).slice(0, 240)}` : head;
+};
+
+const examine = async (pr, cfg) => {
+  const n = pr.number;
   await $`git config user.name "github-actions[bot]" && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"`;
   await $`git fetch -q origin ${pr.baseRefName} pull/${n}/head && git reset -q --hard && git clean -qfd && git checkout -q -B ${umbrellaOf(n)} ${pr.headRefOid}`;
   const diff = await $`git diff ${`origin/${pr.baseRefName}...HEAD`}`.text();
 
   summary(`## #${n} ${pr.title}`);
-  const reports = Object.fromEntries(
-    await Promise.all(cfg.reviewers.map(async (spec) => [spec, json(await run(spec, reviewPrompt({ pr, rules: cfg.rules, diff }))).findings])),
+  // Each reviewer settles on its own: the judge works from whichever answered.
+  const settled = (await Promise.allSettled(cfg.reviewers.map(async (spec) => json(await run(spec, reviewPrompt({ pr, rules: cfg.rules, diff }))).findings))).map(
+    (result, i) => ({ spec: cfg.reviewers[i], ...result }),
   );
+  const reports = Object.fromEntries(settled.filter((r) => r.status === 'fulfilled').map(({ spec, value }) => [spec, value]));
+  const failed = settled.filter((r) => r.status === 'rejected').map(({ spec, reason: error }) => ({ spec, reason: reason(error).replace(`${spec} `, '') }));
   Object.entries(reports).forEach(([spec, list]) => summary(findings(spec, list)));
+  failed.forEach(({ spec, reason }) => summary(`${label(spec)} failed: ${reason}`));
+  if (failed.length === settled.length) throw new Error(`every reviewer failed, nothing was judged: ${failed.map(({ spec, reason }) => `${spec} (${reason})`).join('; ')}`);
 
   const { points } = json(await run(cfg.judge, judgePrompt({ pr, rules: cfg.rules, reports })));
   summary(`Judged by ${names([cfg.judge])}: ${points.length} point${points.length === 1 ? '' : 's'}`);
 
-  const data = { sha: pr.headRefOid, run: runUrl, reviewers: cfg.reviewers, judge: cfg.judge, umbrella: { branch: umbrellaOf(n), pr: null }, points: [] };
+  // Only now is there a review to replace the last one with: a run that fails
+  // before this leaves the earlier review and its fixes standing.
+  await retire(n);
+  const data = { sha: pr.headRefOid, run: runUrl, reviewers: Object.keys(reports), failed, judge: cfg.judge, umbrella: { branch: umbrellaOf(n), pr: null }, points: [] };
   if (points.length) await $`git push -qf origin ${umbrellaOf(n)}`;
   for (const [i, point] of points.entries()) data.points.push(await fix(pr, point, i, cfg));
 
   // Re-read: the author may have edited the description during the run.
   await setBody(n, write((await pull(n)).body, report(pr, data), data));
+  return failed;
+};
+
+export const review = async (n) => {
+  const [cfg, pr] = await Promise.all([config(), pull(n)]);
+  if (!reviewable(pr)) throw new Error(`#${n} comes from a fork or from Underlens itself — Underlens reviews branches of this repository`);
+  const failed = await examine(pr, cfg).catch(async (error) => {
+    // A PR without an earlier review says this one failed; one with an
+    // earlier review keeps it, and the red run says the rest.
+    if (!state(pr.body)) await setBody(n, write((await pull(n)).body, failure(pr, reason(error))));
+    throw error;
+  });
+  if (failed.length) throw new Error(`#${n} was judged without ${failed.map(({ spec, reason }) => `${spec} (${reason})`).join(', ')}`);
 };
