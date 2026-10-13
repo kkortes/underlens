@@ -2,6 +2,7 @@ import { existsSync } from 'fs';
 import { homedir } from 'os';
 
 import config from './config.js';
+import { own } from './review.js';
 import { agent } from './harnesses.js';
 import { ping } from './agents.js';
 import { openPulls, summary } from './github.js';
@@ -35,7 +36,7 @@ const check = async (spec, cfg) => {
 export default async () => {
   const cfg = await config();
   const rows = await Promise.all(cfg.agents.map((spec) => check(spec, cfg)));
-  const waiting = (await openPulls()).filter((pr) => !pr.headRefName.startsWith('underlens/') && !pr.isDraft && !pr.body?.includes('<!-- underlens:state'));
+  const waiting = (await openPulls()).filter((pr) => !own(pr) && !pr.isDraft && !pr.body?.includes('<!-- underlens:state'));
 
   rows.forEach((row) => console.info(`${row.ready ? '✓' : '✗'} ${row.spec} (${row.roles}, ${row.auth}): ${row.note}`));
   summary(

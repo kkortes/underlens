@@ -1,6 +1,6 @@
 import { close, merge, openPull, pull, setBody } from './github.js';
 import { report, state, ticks, write } from './section.js';
-import { retire } from './review.js';
+import { own, retire } from './review.js';
 
 // The umbrella PR can only open once a fix is in it: GitHub refuses a PR
 // with no commits between its branches.
@@ -35,8 +35,8 @@ export const ticked = async (n) => {
 // PR closing takes everything Underlens opened for it along.
 export const closed = async (n) => {
   const pr = await pull(n);
-  const original = pr.headRefName.match(/^underlens\/pr-(\d+)-/)?.[1];
-  if (!original) return pr.headRefName.startsWith('underlens/') || retire(n);
+  const original = pr.headRefName.match(/^underlens-pr-(\d+)-/)?.[1];
+  if (!original) return own(pr) || retire(n);
   const target = await pull(original);
   const data = state(target.body);
   const point = data?.points.find((p) => p.fix === n && ['open', 'conflict'].includes(p.outcome));

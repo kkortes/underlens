@@ -102,16 +102,16 @@
       <step-no>5</step-no>
       <h3>Every point becomes its own fix PR</h3>
       <p>
-        Underlens cuts a branch from the PR, <code>underlens/pr-42</code>, and the judge writes one fix per point.
+        Underlens cuts a branch from the PR, <code>underlens-pr-42</code>, and the judge writes one fix per point.
         Each fix becomes its own small PR into that branch, so you can take one fix and leave another.
       </p>
     </step-text>
     <mock-tree>
       <tree-node>feature/checkout <small>#42</small></tree-node>
-      <tree-node level="1">underlens/pr-42</tree-node>
-      <tree-node level="2">underlens/pr-42-rule-3-1 <small>#43</small></tree-node>
-      <tree-node level="2">underlens/pr-42-rule-1-2 <small>#44</small></tree-node>
-      <tree-node level="2">underlens/pr-42-rule-4-3 <small>#45</small></tree-node>
+      <tree-node level="1">underlens-pr-42</tree-node>
+      <tree-node level="2">underlens-pr-42-rule-3-1 <small>#43</small></tree-node>
+      <tree-node level="2">underlens-pr-42-rule-1-2 <small>#44</small></tree-node>
+      <tree-node level="2">underlens-pr-42-rule-4-3 <small>#45</small></tree-node>
     </mock-tree>
   </flow-step>
 
@@ -163,7 +163,7 @@
     <choice-cards>
       <choice-card>
         <h4>Agree</h4>
-        <p>The fix merges into <code>underlens/pr-42</code>, which comes back to your PR as one PR of its own.</p>
+        <p>The fix merges into <code>underlens-pr-42</code>, which comes back to your PR as one PR of its own.</p>
       </choice-card>
       <choice-card>
         <h4>Disagree</h4>

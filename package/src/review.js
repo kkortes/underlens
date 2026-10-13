@@ -6,8 +6,10 @@ import { fixPrompt, judgePrompt, json, reviewPrompt, run } from './agents.js';
 import { close, deleteBranch, openPull, openPulls, pull, runUrl, setBody, summary } from './github.js';
 import { announcement, failure, report, state, write } from './section.js';
 
-export const umbrellaOf = (n) => `underlens/pr-${n}`;
-const own = (pr) => pr.headRefName.startsWith('underlens/');
+// Flat names: a slash would collide with a branch named plain `underlens`,
+// since git can't hold both `underlens` and `underlens/…`.
+export const umbrellaOf = (n) => `underlens-pr-${n}`;
+export const own = (pr) => pr.headRefName.startsWith('underlens-pr-');
 
 // Umbrella and fixes live on the base repo and target the PR's own branch,
 // which a fork's PR doesn't have — forks aren't reviewed.
