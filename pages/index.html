@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Underlens</title>
+    <meta name="description" content="Nightly code review held to rules you wrote, run on your own AI subscriptions from a GitHub workflow." />
+    <link rel="icon" href="/assets/favicon.svg" />
+    <link rel="stylesheet" href="/node_modules/@ape-egg/vibe/vibe.css" />
+    <link rel="stylesheet" href="/node_modules/@ape-egg/codie/codie.css" />
+    <link rel="stylesheet" href="/css/site.css" />
+
+    <script type="module">
+      import vibe from "/node_modules/@ape-egg/vibe/index.js";
+      import code from "/js/code.js";
+      import demo from "/js/demo.js";
+
+      window.$ = vibe({ harness: "claude", demo });
+      $.on("ready", code);
+    </script>
+  </head>
+
+  <body stylecheat dark vibe-fouc>
+    <underlens-page>
+      <component src="/components/Hero.html"></component>
+      <component src="/components/Flow.html"></component>
+      <component src="/components/Why.html"></component>
+      <component src="/components/Harnesses.html"></component>
+      <component src="/components/Setup.html"></component>
+      <site-footer>
+        <a href="https://www.npmjs.com/package/@ape-egg/underlens" target="_blank" rel="noopener" secondary>@ape-egg/underlens</a>
+        <span>A sibling of <a href="https://overlens.korte.kim" target="_blank" rel="noopener" secondary>Overlens</a></span>
+      </site-footer>
+    </underlens-page>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+{
+  "name": "underlens",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "\"$(git rev-parse --path-format=absolute --git-common-dir)/../../dev.sh\" 'bunx --bun vite --port $PORT --strictPort'",
+    "build": "vibe compile && cp -r package/templates compiled/templates"
+  },
+  "dependencies": {
+    "@ape-egg/codie": "^0.2.0",
+    "@ape-egg/vibe": "^4.3.17"
+  },
+  "devDependencies": {
+    "@ape-egg/vibe-compiler": "^4.3.17",
+    "@ape-egg/vite-plugin-vibe": "^0.5.2",
+    "vite": "^8.3.3"
+  },
+  "vibe-compiler": {
+    "source": "./",
+    "output": "./compiled",
+    "pages": "pages",
+    "root": "pages",
+    "spa": true,
+    "elementsAsIs": true,
+    "componentsAsIs": false,
+    "skipFiles": [
+      "package",
+      "vite.config.js",
+      "package.json",
+      "bun.lock",
+      "vercel.json",
+      "CLAUDE.md",
+      "README.md"
+    ]
+  }
+}

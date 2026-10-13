@@ -1,0 +1,93 @@
+<site-section id="setup">
+  <section-head>
+    <h2>Add it to a repo</h2>
+    <p>Four steps and three files. Most repos need to change only the rules.</p>
+  </section-head>
+
+  <setup-step>
+    <h3><step-no>1</step-no> Write the three files</h3>
+    <codie dark>bunx @ape-egg/underlens init</codie>
+    <p>This writes the three files below into your repo and leaves any that already exist alone.</p>
+
+    <file-block>
+      <h4><code>underlens.config.js</code></h4>
+      <p>Which harnesses review, which one judges, and when. The defaults are Claude for both, once a night.</p>
+      <codie dark data-src="underlens.config.js"></codie>
+    </file-block>
+
+    <file-block>
+      <h4><code>underlens-quality-control.md</code></h4>
+      <p>
+        Your rules. Replace the starter set with what your team actually holds code to, numbered, one decidable claim
+        each.
+      </p>
+      <codie dark data-src="underlens-quality-control.md"></codie>
+    </file-block>
+
+    <file-block>
+      <h4><code>.github/workflows/underlens.yml</code></h4>
+      <p>
+        The triggers and one step that runs the package. The night's hour is the <code>cron</code> line, in UTC.
+        GitHub only schedules from the workflow file, so the hour can't live in the config.
+      </p>
+      <codie dark data-src="underlens.yml"></codie>
+    </file-block>
+  </setup-step>
+
+  <setup-step>
+    <h3><step-no>2</step-no> Add a secret per harness</h3>
+    <p>
+      One per harness in <code>underlens.config.js</code>. See <a href="#harnesses" primary>the instructions for each one</a>.
+      With the default config, that's:
+    </p>
+    <codie dark>claude setup-token
+gh secret set CLAUDE_CODE_OAUTH_TOKEN</codie>
+  </setup-step>
+
+  <setup-step>
+    <h3><step-no>3</step-no> Let workflows open pull requests</h3>
+    <p>
+      The fixes arrive as PRs, and GitHub only lets workflows open PRs once you allow it: Settings → Actions → General →
+      "Allow GitHub Actions to create and approve pull requests". Or from the repo folder:
+    </p>
+    <codie dark>gh api -X PUT repos/{owner}/{repo}/actions/permissions/workflow -F can_approve_pull_request_reviews=true</codie>
+  </setup-step>
+
+  <setup-step>
+    <h3><step-no>4</step-no> Commit, then check every harness</h3>
+    <p>
+      Push the three files to your default branch, then run the workflow by hand with no PR number. It signs in to
+      every configured harness, asks each one for a one-word answer, and reports per harness whether it's ready for the
+      next run. The run fails until every harness is ready.
+    </p>
+    <codie dark>gh workflow run underlens.yml</codie>
+    <mock-window>
+      <mock-bar>Underlens · harnesses</mock-bar>
+      <mock-body>
+        <table>
+          <tr><th></th><th>Harness</th><th>Role</th><th>Signs in with</th><th></th></tr>
+          <tr><td>✅</td><td>Claude</td><td>reviewer + judge</td><td>subscription</td><td>answered</td></tr>
+          <tr><td>✅</td><td>GPT</td><td>reviewer</td><td>subscription</td><td>answered</td></tr>
+          <tr><td>❌</td><td>GLM</td><td>reviewer</td><td>subscription</td><td>secret <code>GLM_API_KEY</code> is missing</td></tr>
+        </table>
+        <p muted>Not ready: fix the rows above, then run this again.</p>
+      </mock-body>
+    </mock-window>
+  </setup-step>
+
+  <setup-after>
+    <h3>From then on</h3>
+    <ul>
+      <li>Every new PR gets its Underlens section, saying when it will be reviewed and by whom.</li>
+      <li>
+        To review a PR right away, or review it again: Actions → Underlens → Run workflow, with its number. Each review
+        starts fresh and closes the fixes left open from the last one.
+      </li>
+      <li>Draft PRs wait until they're ready for review. PRs from forks aren't reviewed, because the fixes need a branch in your repo.</li>
+      <li>
+        Fix PRs opened by the workflow don't trigger your other workflows, which is GitHub's rule for its token. Your CI
+        runs once you merge the agreed fixes into your PR.
+      </li>
+    </ul>
+  </setup-after>
+</site-section>

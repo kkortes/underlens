@@ -1,0 +1,42 @@
+# @ape-egg/underlens
+
+Nightly code review held to rules you wrote, run from a GitHub workflow on your own AI subscriptions. Guide: [underlens.korte.kim](https://underlens.korte.kim).
+
+Every open PR gets a section saying when it will be reviewed. When the time comes, one reviewer per configured harness reads `underlens-quality-control.md`, the diff and the codebase, and reports where the PR breaks a numbered rule. A judge folds the reports into points and writes one fix PR per point, into an umbrella branch cut from the PR. The PR's section becomes a status report with **Agree** (merge the fix) and **Disagree** (close it) per point. A disagreed point returns on every review while its rule stands; only changing the code or the rule settles it.
+
+## Setup
+
+```sh
+bunx @ape-egg/underlens init      # writes the three files below
+claude setup-token                # then:
+gh secret set CLAUDE_CODE_OAUTH_TOKEN
+gh api -X PUT repos/{owner}/{repo}/actions/permissions/workflow -F can_approve_pull_request_reviews=true
+git add -A && git commit -m "add underlens" && git push
+gh workflow run underlens.yml     # checks every configured harness signs in
+```
+
+- `underlens.config.js`: `reviewers`, `judge`, `when` (`nightly` | `opened` | `manual`) and optional `models`.
+- `underlens-quality-control.md`: the numbered, human-curated rules.
+- `.github/workflows/underlens.yml`: triggers, permissions and `bunx @ape-egg/underlens@1`.
+
+## Harnesses
+
+| id | CLI | secret | signs in with |
+| --- | --- | --- | --- |
+| `claude` | Claude Code | `CLAUDE_CODE_OAUTH_TOKEN` | Pro/Max subscription (`claude setup-token`, one year) |
+| `gpt` | Codex | `CODEX_AUTH_JSON` | ChatGPT subscription, `~/.codex/auth.json`; private repos only, refresh about weekly on hosted runners |
+| `glm` | Claude Code → Z.ai | `GLM_API_KEY` | GLM Coding Plan key |
+| `gemini` | Gemini CLI | `GEMINI_API_KEY` | API key: no subscription sign-in for CI exists |
+| `grok` | Grok CLI | `XAI_API_KEY` | API key: no subscription sign-in for CI is documented |
+
+## Commands
+
+The workflow runs `underlens` with no argument; it acts on the event:
+
+- `schedule`: reviews every open, non-draft PR that hasn't been reviewed yet (`when: 'nightly'`).
+- `workflow_dispatch`: with `pr`, reviews that PR now; without, validates every harness.
+- `pull_request` `opened`/`reopened`: announces, or reviews at once with `when: 'opened'`.
+- `pull_request` `edited`: acts on ticked Agree / Disagree boxes.
+- `pull_request` `closed`: a fix merged or closed by hand counts as Agree / Disagree, and a closed PR takes its Underlens branches and PRs with it.
+
+`underlens init` and `underlens validate` also run by name.

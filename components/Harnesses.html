@@ -1,0 +1,101 @@
+<site-section id="harnesses">
+  <section-head>
+    <h2>Runs on your own subscriptions</h2>
+    <p>
+      Underlens runs each harness's own CLI in your workflow, signed in with your personal subscription where the vendor
+      allows that in CI. Each one needs a single repository secret. Where a vendor offers no subscription sign-in for CI,
+      this page says so, and that harness runs on an API key billed per use.
+    </p>
+  </section-head>
+
+  <harness-tabs>
+    <button secondary active="@[harness === 'claude']" onclick="$.harness = 'claude'">Claude</button>
+    <button secondary active="@[harness === 'gpt']" onclick="$.harness = 'gpt'">GPT</button>
+    <button secondary active="@[harness === 'glm']" onclick="$.harness = 'glm'">GLM</button>
+    <button secondary active="@[harness === 'gemini']" onclick="$.harness = 'gemini'">Gemini</button>
+    <button secondary active="@[harness === 'grok']" onclick="$.harness = 'grok'">Grok</button>
+  </harness-tabs>
+
+  <harness-card hidden="@[harness !== 'claude']">
+    <harness-head>
+      <h3>Claude <small>'claude'</small></h3>
+      <badge bg-green text-green>Subscription</badge>
+    </harness-head>
+    <p>Needs Claude Pro, Max, Team or Enterprise. Claude Code makes a token meant for CI, and Anthropic documents using it there.</p>
+    <codie dark>claude setup-token
+gh secret set CLAUDE_CODE_OAUTH_TOKEN</codie>
+    <p fine>
+      <code>setup-token</code> opens a browser sign-in and prints a token that lasts one year. Paste it when
+      <code>gh</code> asks. When it expires, run the two commands again.
+    </p>
+  </harness-card>
+
+  <harness-card hidden="@[harness !== 'gpt']">
+    <harness-head>
+      <h3>GPT <small>'gpt'</small></h3>
+      <badge bg-yellow text-yellow>Subscription, private repos, about weekly</badge>
+    </harness-head>
+    <p>
+      Needs ChatGPT Plus or Pro, used through the Codex CLI. OpenAI documents signing Codex in on CI with your account,
+      but recommends an API key, and says to use it only in private repositories on runners you trust.
+    </p>
+    <codie dark>echo 'cli_auth_credentials_store = "file"' >> ~/.codex/config.toml
+codex login
+gh secret set CODEX_AUTH_JSON &lt; ~/.codex/auth.json</codie>
+    <p fine>
+      Codex refreshes its token when it's 8 days old or gets rejected. A GitHub-hosted runner starts from the secret
+      on every run and can't save the refreshed token back, so expect to run <code>codex login</code> and set the
+      secret again about once a week. The validate run warns when that's due. On a self-hosted runner (change
+      <code>runs-on</code> in the workflow), Codex keeps the token in <code>~/.codex</code> between runs and stays signed in.
+    </p>
+  </harness-card>
+
+  <harness-card hidden="@[harness !== 'glm']">
+    <harness-head>
+      <h3>GLM <small>'glm'</small></h3>
+      <badge bg-yellow text-yellow>Subscription, lightly</badge>
+    </harness-head>
+    <p>
+      Needs a Z.ai GLM Coding Plan. The plan comes with a key that works only inside supported coding tools, and Claude
+      Code is one of them. Underlens runs GLM through Claude Code, pointed at Z.ai's endpoint.
+    </p>
+    <codie dark>gh secret set GLM_API_KEY</codie>
+    <p fine>
+      Paste the Coding Plan key from your Z.ai account. Z.ai's terms keep the plan to supported tools, and they neither
+      allow nor forbid running those tools in CI. A nightly review is light use, but Z.ai can still flag heavy automated
+      use.
+    </p>
+  </harness-card>
+
+  <harness-card hidden="@[harness !== 'gemini']">
+    <harness-head>
+      <h3>Gemini <small>'gemini'</small></h3>
+      <badge bg-red text-red>API key, no subscription route</badge>
+    </harness-head>
+    <p>
+      There's no way to use a Gemini subscription in CI. On June 18, 2026 Google stopped Login with Google in Gemini CLI
+      for personal, Google AI Pro and Ultra accounts, and its terms forbid using those sign-in credentials in other tools.
+      Underlens runs Gemini on an AI Studio API key instead.
+    </p>
+    <codie dark>gh secret set GEMINI_API_KEY</codie>
+    <p fine>Create the key at aistudio.google.com. It has a free tier; anything beyond that is billed per use.</p>
+  </harness-card>
+
+  <harness-card hidden="@[harness !== 'grok']">
+    <harness-head>
+      <h3>Grok <small>'grok'</small></h3>
+      <badge bg-red text-red>API key, no subscription route</badge>
+    </harness-head>
+    <p>
+      SuperGrok and X Premium+ sign in to the Grok CLI from a browser, but xAI sends CI and automation to API keys and
+      doesn't document a subscription sign-in for them. Underlens runs Grok on an xAI API key, billed per use.
+    </p>
+    <codie dark>gh secret set XAI_API_KEY</codie>
+    <p fine>Create the key at console.x.ai.</p>
+  </harness-card>
+
+  <p>
+    The workflow passes all five secrets, so adding a harness to <code>underlens.config.js</code> only takes its secret.
+    You can check each one before the next run: see the last step below.
+  </p>
+</site-section>

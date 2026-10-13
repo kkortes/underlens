@@ -1,0 +1,178 @@
+<site-section id="flow">
+  <section-head>
+    <h2>How it works</h2>
+    <p>One pull request, from the moment it opens to the moment you decide.</p>
+  </section-head>
+
+  <flow-step>
+    <step-text>
+      <step-no>1</step-no>
+      <h3>You write the rules</h3>
+      <p>
+        <code>underlens-quality-control.md</code> is a numbered list of rules, each one decidable: a reviewer can point
+        at a line and name the rule it breaks. A person curates it. It's the only standard Underlens holds code to, so
+        taste no rule decides is never raised.
+      </p>
+    </step-text>
+    <mock-window>
+      <mock-bar>underlens-quality-control.md</mock-bar>
+      <mock-body>
+        <ol>
+          <li>No <code>console.log</code> in committed code.</li>
+          <li>No commented-out code.</li>
+          <li>No <code>try</code>/<code>catch</code> that swallows an error.</li>
+          <li>No dependency for what a few lines would do.</li>
+        </ol>
+      </mock-body>
+    </mock-window>
+  </flow-step>
+
+  <flow-step>
+    <step-text>
+      <step-no>2</step-no>
+      <h3>A pull request says what will happen</h3>
+      <p>
+        When a PR opens, Underlens adds a section to its description that says when the review runs and who does it,
+        read from <code>underlens.config.js</code>. By default that's once a night.
+      </p>
+    </step-text>
+    <mock-window>
+      <mock-bar><b>#42</b> Add checkout flow</mock-bar>
+      <mock-body>
+        <p muted>Moves payment into its own step and adds the receipt page.</p>
+        <mock-section>
+          <h4>Underlens</h4>
+          <p>
+            Underlens reviews this PR at the next nightly run (03:00 UTC) with Claude and GPT, judged by Claude,
+            against <u>underlens-quality-control.md</u>.
+          </p>
+        </mock-section>
+      </mock-body>
+    </mock-window>
+  </flow-step>
+
+  <flow-step>
+    <step-text>
+      <step-no>3</step-no>
+      <h3>Reviewers run side by side at night</h3>
+      <p>
+        When the time comes, one agent per configured harness starts in CI and does a full review. Each reads the
+        quality document first, then the PR's diff, then as much of the codebase as it needs. Each one reports only
+        where the PR breaks a numbered rule.
+      </p>
+    </step-text>
+    <mock-lanes>
+      <!-- each demo.lanes as lane -->
+      <mock-lane>
+        <badge outline>@[lane.harness]</badge>
+        <lane-track><span>rules</span><span>diff</span><span>codebase</span></lane-track>
+        <lane-out>@[lane.findings] findings</lane-out>
+      </mock-lane>
+      <!-- /each -->
+    </mock-lanes>
+  </flow-step>
+
+  <flow-step>
+    <step-text>
+      <step-no>4</step-no>
+      <h3>A judge turns them into points</h3>
+      <p>
+        One judge reads every report. Findings about the same rule in the same place become one point, however
+        differently they were worded. Any finding the code doesn't actually support is dropped. Each point is named
+        after its rule and its place, so drift that stays reads the same on every review.
+      </p>
+    </step-text>
+    <mock-judge>
+      <judge-in>
+        <!-- each demo.findings as finding -->
+        <finding-chip dropped="@[finding.dropped]"><b>@[finding.harness]</b> @[finding.at]</finding-chip>
+        <!-- /each -->
+      </judge-in>
+      <judge-arrow aria-hidden="true">→</judge-arrow>
+      <judge-out>
+        <point-chip>Rule 3 · api.js</point-chip>
+        <point-chip>Rule 1 · cart.js</point-chip>
+        <point-chip>Rule 4 · package.json</point-chip>
+      </judge-out>
+    </mock-judge>
+  </flow-step>
+
+  <flow-step>
+    <step-text>
+      <step-no>5</step-no>
+      <h3>Every point becomes its own fix PR</h3>
+      <p>
+        Underlens cuts a branch from the PR, <code>underlens/pr-42</code>, and the judge writes one fix per point.
+        Each fix becomes its own small PR into that branch, so you can take one fix and leave another.
+      </p>
+    </step-text>
+    <mock-tree>
+      <tree-node>feature/checkout <small>#42</small></tree-node>
+      <tree-node level="1">underlens/pr-42</tree-node>
+      <tree-node level="2">underlens/pr-42-rule-3-1 <small>#43</small></tree-node>
+      <tree-node level="2">underlens/pr-42-rule-1-2 <small>#44</small></tree-node>
+      <tree-node level="2">underlens/pr-42-rule-4-3 <small>#45</small></tree-node>
+    </mock-tree>
+  </flow-step>
+
+  <flow-step>
+    <step-text>
+      <step-no>6</step-no>
+      <h3>The PR's section becomes the report</h3>
+      <p>
+        The section in the original PR is replaced with a short status report: one line per point, each explained and
+        linked to its fix. Each line has an Agree box and a Disagree box. Once reported, the PR isn't reviewed again
+        unless you ask for it by hand.
+      </p>
+    </step-text>
+    <mock-window>
+      <mock-bar><b>#42</b> Add checkout flow</mock-bar>
+      <mock-body>
+        <mock-section>
+          <h4>Underlens</h4>
+          <p muted>Reviewed <code>9f3c2e1</code> with Claude and GPT, judged by Claude</p>
+          <ol>
+            <li>
+              <b>Rule 3 · Swallowed error in api.js</b>: the catch returns null, so a failed charge reads as no charge.
+              <u>Fix #43</u> · <b ok>Agreed</b>
+            </li>
+            <li>
+              <b>Rule 1 · console.log in cart.js</b>: a debug log ships with the cart. <u>Fix #44</u>
+              <mock-ticks><label><input type="checkbox" disabled /> Agree</label><label><input type="checkbox" disabled /> Disagree</label></mock-ticks>
+            </li>
+            <li>
+              <b>Rule 4 · New dependency in package.json</b>: <code>left-pad</code> for one call. <u>Fix #45</u> ·
+              <b muted>Disagreed</b>
+            </li>
+          </ol>
+        </mock-section>
+      </mock-body>
+    </mock-window>
+  </flow-step>
+
+  <flow-step>
+    <step-text>
+      <step-no>7</step-no>
+      <h3>You have three choices</h3>
+      <p>
+        Disagreeing doesn't make a point go away. The rule still says what it says, so the same point comes back on the
+        next review, and it keeps coming back until the code or the document changes. That's by design: drift should
+        keep nagging until a person settles it.
+      </p>
+    </step-text>
+    <choice-cards>
+      <choice-card>
+        <h4>Agree</h4>
+        <p>The fix merges into <code>underlens/pr-42</code>, which comes back to your PR as one PR of its own.</p>
+      </choice-card>
+      <choice-card>
+        <h4>Disagree</h4>
+        <p>The fix PR closes. The code stays as it is, and the reminder returns on the next review.</p>
+      </choice-card>
+      <choice-card>
+        <h4>Change the rule</h4>
+        <p>Edit the quality document. The rule no longer says it, so the agents stop raising it.</p>
+      </choice-card>
+    </choice-cards>
+  </flow-step>
+</site-section>

@@ -1,0 +1,7 @@
+{
+  "framework": null,
+  "installCommand": "bun install",
+  "buildCommand": "bun run build",
+  "outputDirectory": "compiled",
+  "rewrites": [{ "source": "/:path*", "destination": "/index.html" }]
+}

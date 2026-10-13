@@ -1,0 +1,37 @@
+name: Underlens
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  pull_request:
+    types: [opened, reopened, edited, closed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: PR number to review now. Leave empty to check every harness is signed in.
+        required: false
+
+concurrency:
+  group: underlens-${{ github.event.pull_request.number || inputs.pr || github.run_id }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  underlens:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+      - run: bunx @ape-egg/underlens@1
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ inputs.pr }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
+          GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
