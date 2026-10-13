@@ -5,7 +5,7 @@ import config from './config.js';
 import { own } from './review.js';
 import { agent } from './harnesses.js';
 import { ping } from './agents.js';
-import { openPulls, summary } from './github.js';
+import { openPulls, pullsAllowed, pullsForbidden, summary } from './github.js';
 
 const days = (since) => Math.floor((Date.now() - Date.parse(since)) / 86_400_000);
 
@@ -35,10 +35,12 @@ const check = async (spec, cfg) => {
 
 export default async () => {
   const cfg = await config();
-  const rows = await Promise.all(cfg.agents.map((spec) => check(spec, cfg)));
+  const [rows, allowed] = await Promise.all([Promise.all(cfg.agents.map((spec) => check(spec, cfg))), pullsAllowed()]);
+  const ready = allowed && rows.every((row) => row.ready);
   const waiting = (await openPulls()).filter((pr) => !own(pr) && !pr.isDraft && !pr.body?.includes('<!-- underlens:state'));
 
   rows.forEach((row) => console.info(`${row.ready ? '✓' : '✗'} ${row.spec} (${row.roles}, ${row.auth}): ${row.note}`));
+  console.info(`${allowed ? '✓' : '✗'} pull requests: ${allowed ? 'Actions may open them' : pullsForbidden}`);
   summary(
     [
       '## Underlens · reviewers and judge',
@@ -47,10 +49,12 @@ export default async () => {
       '| --- | --- | --- | --- | --- | --- |',
       ...rows.map((row) => `| ${row.ready ? '✅' : '❌'} | ${row.name} | ${row.model} | ${row.roles} | ${row.auth} | ${row.note} |`),
       '',
-      rows.every((row) => row.ready)
+      allowed ? '✅ Actions may open the fix PRs.' : `❌ ${pullsForbidden}`,
+      '',
+      ready
         ? `Ready. ${waiting.length} open PR${waiting.length === 1 ? '' : 's'} wait${waiting.length === 1 ? 's' : ''} for review.`
-        : 'Not ready: fix the rows above, then run this again. Setup for each harness: https://underlens.korte.kim/#harnesses, model strings: https://underlens.korte.kim/#models',
+        : 'Not ready: fix what is marked ❌ above, then run this again. Setup for each harness: https://underlens.korte.kim/#harnesses, model strings: https://underlens.korte.kim/#models',
     ].join('\n'),
   );
-  if (!rows.every((row) => row.ready)) process.exit(1);
+  if (!ready) process.exit(1);
 };

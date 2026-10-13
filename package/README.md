@@ -12,7 +12,7 @@ A reviewer that fails (its CLI won't start, exits with an error, runs past 30 mi
 bunx @ape-egg/underlens init      # writes the three files below
 claude setup-token                # then:
 gh secret set CLAUDE_CODE_OAUTH_TOKEN
-gh api -X PUT repos/{owner}/{repo}/actions/permissions/workflow -F can_approve_pull_request_reviews=true
+gh api -X PUT repos/{owner}/{repo}/actions/permissions/workflow -F can_approve_pull_request_reviews=true   # lets the workflow open fix PRs
 git add -A && git commit -m "add underlens" && git push
 gh workflow run underlens.yml     # checks every configured harness signs in
 ```
@@ -46,7 +46,7 @@ The same harness can appear more than once on different models; each string runs
 
 ## Validate before a real run
 
-Run the workflow with the PR number left empty (`gh workflow run underlens.yml`, or Actions → Underlens → Run workflow). It pings every configured string on its exact harness and model, writes one row per string to the job summary, and fails until every row is ready.
+Run the workflow with the PR number left empty (`gh workflow run underlens.yml`, or Actions → Underlens → Run workflow). It pings every configured string on its exact harness and model, writes one row per string to the job summary, checks GitHub lets Actions open pull requests (Settings → Actions → General → Workflow permissions → "Allow GitHub Actions to create and approve pull requests"), and fails until all of it is ready. Every review checks that setting again before it starts.
 
 ## Commands
 

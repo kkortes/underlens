@@ -70,7 +70,7 @@ gh run watch</codie>
       Nothing gets reviewed. Each string in <code>reviewers</code> and <code>judge</code> gets its own row: Underlens
       checks its secret, signs in to its harness on exactly that model, and asks for a one-word answer. The rows land
       in the run's summary, and the run fails until every row is ready. A missing secret, a spent sign-in or a model
-      the CLI doesn't take shows up in its row. Run it again after every change to <code>underlens.config.js</code>.
+      the CLI doesn't take shows up in its row, and the summary says whether step 3 took. Run it again after every change to <code>underlens.config.js</code>.
     </p>
     <mock-window>
       <mock-bar>Underlens · reviewers and judge</mock-bar>
@@ -82,7 +82,8 @@ gh run watch</codie>
           <tr><td>✅</td><td>GPT</td><td>gpt-6.1-sol</td><td>reviewer</td><td>subscription</td><td>answered</td></tr>
           <tr><td>❌</td><td>GLM</td><td>CLI default</td><td>reviewer</td><td>subscription</td><td>secret <code>GLM_API_KEY</code> is missing</td></tr>
         </table>
-        <p muted>Not ready: fix the rows above, then run this again.</p>
+        <p>✅ Actions may open the fix PRs.</p>
+        <p muted>Not ready: fix what is marked ❌ above, then run this again.</p>
       </mock-body>
     </mock-window>
   </setup-step>

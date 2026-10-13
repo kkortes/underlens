@@ -3,7 +3,7 @@ import { $ } from 'bun';
 import config, { names } from './config.js';
 import { label } from './harnesses.js';
 import { fixPrompt, judgePrompt, json, reviewPrompt, run } from './agents.js';
-import { close, deleteBranch, openPull, openPulls, pull, runUrl, setBody, summary } from './github.js';
+import { close, deleteBranch, openPull, openPulls, pull, pullsAllowed, pullsForbidden, runUrl, setBody, summary } from './github.js';
 import { announcement, failure, report, state, write } from './section.js';
 
 // Flat names: a slash would collide with a branch named plain `underlens`,
@@ -15,19 +15,27 @@ export const own = (pr) => pr.headRefName.startsWith('underlens-pr-');
 // which a fork's PR doesn't have — forks aren't reviewed.
 const reviewable = (pr) => !pr.isCrossRepository && !own(pr);
 
+// Every fix becomes a PR, so a repo that won't let Actions open one fails
+// before the review rather than after it.
+const permitted = async () => {
+  if (!(await pullsAllowed())) throw new Error(pullsForbidden);
+};
+
 export const opened = async (n) => {
   const [cfg, pr] = await Promise.all([config(), pull(n)]);
   if (!reviewable(pr)) return;
+  await permitted();
   await setBody(n, write(pr.body, announcement(pr, cfg)));
-  await review(n);
+  await attempt(n);
 };
 
 export const scheduled = async () => {
   const due = (await openPulls()).filter((pr) => reviewable(pr) && !pr.isDraft && !state(pr.body));
   console.info(due.length ? `Reviewing ${due.map((pr) => `#${pr.number}`).join(', ')}` : 'No open PR waits for a review');
+  if (due.length) await permitted();
   // One PR failing leaves the rest to their own review; the run still ends red.
   const failed = [];
-  for (const pr of due) await review(pr.number).catch((error) => failed.push(`#${pr.number}: ${error.message}`));
+  for (const pr of due) await attempt(pr.number).catch((error) => failed.push(`#${pr.number}: ${error.message}`));
   if (failed.length) throw new Error(`Underlens failed on ${failed.length} of ${due.length} PRs:\n${failed.join('\n')}`);
 };
 
@@ -97,7 +105,7 @@ const examine = async (pr, cfg) => {
   return failed;
 };
 
-export const review = async (n) => {
+const attempt = async (n) => {
   const [cfg, pr] = await Promise.all([config(), pull(n)]);
   if (!reviewable(pr)) throw new Error(`#${n} comes from a fork or from Underlens itself — Underlens reviews branches of this repository`);
   const failed = await examine(pr, cfg).catch(async (error) => {
@@ -107,4 +115,9 @@ export const review = async (n) => {
     throw error;
   });
   if (failed.length) throw new Error(`#${n} was judged without ${failed.map(({ spec, reason }) => `${spec} (${reason})`).join(', ')}`);
+};
+
+export const review = async (n) => {
+  await permitted();
+  await attempt(n);
 };

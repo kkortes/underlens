@@ -55,7 +55,11 @@ dispatches on `GITHUB_EVENT_NAME` (or `init` / `validate` by name).
   gets an explicit `--tools` list, and its plain output stops at the first
   message, so it runs with `--output-format json`.
 - [validate.js](package/src/validate.js) — dispatch without a PR number: one
-  row per configured string, each pinged on that exact harness and model.
+  row per configured string, each pinged on that exact harness and model, and
+  whether Actions may open PRs. Every review asks that too before it starts
+  (`pullsAllowed` in [github.js](package/src/github.js)): the token can't read
+  the setting, so it asks for a PR from the default branch into itself and
+  reads why GitHub turned it down.
 - [agents.js](package/src/agents.js) — spawn, JSON extraction and the
   review / judge / fix prompts.
 - [review.js](package/src/review.js) — opened, scheduled, review. A review
