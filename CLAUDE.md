@@ -86,9 +86,10 @@ the fork.
   documented for CI.
 - GPT: `~/.codex/auth.json` with `cli_auth_credentials_store = "file"` →
   `CODEX_AUTH_JSON`. The key must sit at the top of `config.toml`, before any
-  table: appended after one, TOML reads it as part of that table. OpenAI: private repos and trusted runners only. Codex
-  rotates the token at 8 days or on a 401 and a hosted runner can't persist it,
-  so validate flags a seed 8+ days old.
+  table: appended after one, TOML reads it as part of that table. OpenAI:
+  private repos and trusted runners only. Codex rotates the token at 8 days or
+  on a 401 and a hosted runner can't persist it, so validate flags a seed 8+
+  days old.
 - GLM: Z.ai Coding Plan key via Claude Code at `https://api.z.ai/api/anthropic`;
   plan terms limit it to supported tools, silent on CI.
 - Gemini: Login with Google shut down for Gemini CLI on 2026-06-18 → API key.
