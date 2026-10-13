@@ -37,9 +37,12 @@ gh secret set CLAUDE_CODE_OAUTH_TOKEN</codie>
     </harness-head>
     <p>
       Needs ChatGPT Plus or Pro, used through the Codex CLI. OpenAI documents signing Codex in on CI with your account,
-      but recommends an API key, and says to use it only in private repositories on runners you trust.
+      but recommends an API key, and says to use it only in private repositories on runners you trust. The first two
+      lines put <code>cli_auth_credentials_store = "file"</code> at the top of <code>~/.codex/config.toml</code>, so Codex
+      saves its sign-in to <code>auth.json</code> instead of the system keychain.
     </p>
-    <codie dark>echo 'cli_auth_credentials_store = "file"' >> ~/.codex/config.toml
+    <codie dark>mkdir -p ~/.codex && f=~/.codex/config.toml
+{ echo 'cli_auth_credentials_store = "file"'; grep -sv '^cli_auth_credentials_store' $f; } > $f.new; mv $f.new $f
 codex login
 gh secret set CODEX_AUTH_JSON &lt; ~/.codex/auth.json</codie>
     <p fine>
