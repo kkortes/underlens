@@ -77,7 +77,9 @@ const reason = ({ message }) => {
 const examine = async (pr, cfg) => {
   const n = pr.number;
   await $`git config user.name "github-actions[bot]" && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"`;
-  await $`git fetch -q origin ${pr.baseRefName} pull/${n}/head && git reset -q --hard && git clean -qfd && git checkout -q -B ${umbrellaOf(n)} ${pr.headRefOid}`;
+  // The three-dot diff needs the merge base, which a default shallow checkout lacks.
+  const unshallow = (await $`git rev-parse --is-shallow-repository`.text()).trim() === 'true' ? ['--unshallow'] : [];
+  await $`git fetch -q ${unshallow} origin ${pr.baseRefName} pull/${n}/head && git reset -q --hard && git clean -qfd && git checkout -q -B ${umbrellaOf(n)} ${pr.headRefOid}`;
   const diff = await $`git diff ${`origin/${pr.baseRefName}...HEAD`}`.text();
 
   summary(`## #${n} ${pr.title}`);

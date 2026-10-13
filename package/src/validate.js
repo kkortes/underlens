@@ -24,7 +24,7 @@ const check = async (spec, cfg) => {
   const { id, harness: { name, secret, subscription }, model } = agent(spec);
   const roles = [cfg.reviewers.includes(spec) && 'reviewer', cfg.judge === spec && 'judge'].filter(Boolean).join(' + ');
   const row = { spec, name, model: model ?? 'CLI default', roles, auth: subscription ? 'subscription' : 'API key' };
-  if (!process.env[secret]) return { ...row, ready: false, note: `secret \`${secret}\` is missing` };
+  if (!process.env[secret]) return { ...row, ready: false, note: `secret \`${secret}\` is missing: set it, and pass it under \`secrets\` in .github/workflows/underlens.yml` };
   const spent = stale(id);
   if (spent) return { ...row, ready: false, note: spent };
   // Validation's whole job is to report each harness's failure side by side.

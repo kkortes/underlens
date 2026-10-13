@@ -1,10 +1,9 @@
 name: Underlens
 
-# The triggers decide when PRs are reviewed. schedule reviews every open,
-# non-draft PR not reviewed yet, at the cron's hour in UTC. Add opened and
-# reopened to the pull_request types to review each PR as it opens. Run
-# workflow reviews one PR on demand. Keep edited and closed: they act on
-# Agree and Disagree, and clean up after a closed PR.
+# The triggers decide when PRs are reviewed: schedule reviews every open PR not
+# reviewed yet, at the cron's hour in UTC. Add opened and reopened to
+# pull_request to review each PR as it opens. Keep edited and closed: they act
+# on Agree and Disagree, and clean up after a closed PR.
 on:
   schedule:
     - cron: '0 3 * * *'
@@ -13,11 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       pr:
-        description: PR number to review now. Leave empty to check every harness is signed in.
-        required: false
-
-concurrency:
-  group: underlens-${{ github.event.pull_request.number || inputs.pr || github.run_id }}
+        description: PR to review now. Leave empty to check every harness signs in.
 
 permissions:
   contents: write
@@ -25,18 +20,10 @@ permissions:
 
 jobs:
   underlens:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: oven-sh/setup-bun@v2
-      - run: bunx @ape-egg/underlens@1
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR: ${{ inputs.pr }}
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
-          GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+    uses: kkortes/underlens/.github/workflows/run.yml@v1
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      XAI_API_KEY: ${{ secrets.XAI_API_KEY }}

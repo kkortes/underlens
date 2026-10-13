@@ -30,9 +30,17 @@ exactly what `underlens init` writes.
 
 ## Package
 
-Runs as `bunx @ape-egg/underlens@1` from the consumer's workflow, under bun,
-with `gh` and git from the hosted runner. [bin/underlens.js](package/bin/underlens.js)
-dispatches on `GITHUB_EVENT_NAME` (or `init` / `validate` by name).
+Runs as `bunx @ape-egg/underlens@1`, under bun, with `gh` and git from the
+hosted runner. Consumers don't call it directly: their workflow (the template
+[underlens.yml](package/templates/underlens.yml)) keeps only the triggers,
+`permissions` and the harness `secrets`, and calls the reusable workflow
+[.github/workflows/run.yml](.github/workflows/run.yml) at tag `v1`, which
+checks out, sets up bun and runs the package with `GH_TOKEN`. Those three can't
+move: a called workflow can't widen its caller's token, and `secrets: inherit`
+stops at the owner. Move the floating `v1` tag when run.yml changes.
+[bin/underlens.js](package/bin/underlens.js) dispatches on `GITHUB_EVENT_NAME`
+(or `init` / `validate` by name) and reads a dispatch's `pr` input from the
+event payload; a review unshallows the checkout before it diffs.
 
 - [config.js](package/src/config.js) — loads `underlens.config.js` and the
   quality document from the workflow's checkout (default branch on schedule and

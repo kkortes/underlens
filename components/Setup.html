@@ -31,9 +31,11 @@
     <file-block>
       <h4><code>.github/workflows/underlens.yml</code></h4>
       <p>
-        The triggers and one step that runs the package. The triggers decide when PRs are reviewed: the template
-        reviews once a night at the <code>cron</code> hour, in UTC. Add <code>opened</code> and <code>reopened</code>
-        to review each PR as it opens, or drop <code>schedule</code> to review only when you ask.
+        The triggers, the token's permissions and one line that calls Underlens with your harness secrets. The
+        triggers decide when PRs are reviewed: the template reviews once a night at the <code>cron</code> hour, in UTC.
+        Add <code>opened</code> and <code>reopened</code> to review each PR as it opens, or drop <code>schedule</code>
+        to review only when you ask. GitHub only hands secrets to a called workflow that you pass them to, one line
+        each; keep the lines for the harnesses you use.
       </p>
       <codie dark data-src="underlens.yml"></codie>
     </file-block>

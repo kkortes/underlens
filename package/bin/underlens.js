@@ -14,7 +14,7 @@ const pullRequest = {
 
 const ci = {
   schedule: scheduled,
-  workflow_dispatch: () => (process.env.PR ? review(Number(process.env.PR)) : validate()),
+  workflow_dispatch: () => (event.inputs?.pr ? review(Number(event.inputs.pr)) : validate()),
   pull_request: () => pullRequest[event.action]?.(event.pull_request.number),
 };
 
