@@ -13,8 +13,12 @@ export const state = (body) => {
   return encoded && JSON.parse(Buffer.from(encoded, 'base64').toString());
 };
 
+const site = '[Underlens](https://underlens.korte.kim)';
+
+// A section with state is a finished review; without, it's an announcement or
+// a failure note.
 export const write = (body, content, data) =>
-  `${(body ?? '').replace(fence, '').trimEnd()}\n\n<!-- underlens -->\n### Underlens\n\n${content}\n${data ? `<!-- underlens:state ${Buffer.from(JSON.stringify(data)).toString('base64')} -->\n` : ''}<!-- /underlens -->`.trimStart();
+  `${(body ?? '').replace(fence, '').trimEnd()}\n\n<!-- underlens -->\n### ${data ? `This PR was reviewed through ${site}` : site}\n\n${content}\n${data ? `<!-- underlens:state ${Buffer.from(JSON.stringify(data)).toString('base64')} -->\n` : ''}<!-- /underlens -->`.trimStart();
 
 export const ticks = (body) =>
   Object.fromEntries([...(body ?? '').matchAll(/- \[[xX]\] (Agree|Disagree) <!-- (\d+) -->/g)].reverse().map(([, choice, fix]) => [fix, choice]));
@@ -24,14 +28,21 @@ const team = (config) => `with ${names(config.reviewers)}, judged by ${names([co
 
 export const announcement = (pr, config) => `Underlens is reviewing this PR now ${team(config)}, against ${rulesLink(pr)}. [Follow the run](${runUrl}).`;
 
+// The rule in its own words, then what the fix changed. State written before
+// fixes explained themselves carries only the judge's title and detail.
+export const block = (point) => `**Rule ${point.rule}: ${point.statement ?? point.title}**\n${point.change ?? point.detail}`;
+
 const outcome = (point, data) =>
   ({
-    open: `\n   - [ ] Agree <!-- ${point.fix} -->\n   - [ ] Disagree <!-- ${point.fix} -->`,
-    agreed: ` — **Agreed**, merged into ${data.umbrella.pr ? `#${data.umbrella.pr}` : `\`${data.umbrella.branch}\``}.`,
-    disagreed: ' — **Disagreed**, fix closed. It comes back next review while its rule stands.',
-    conflict: ` — **Agreed**, but it conflicts with a fix merged before it: resolve #${point.fix} by hand.`,
-    nofix: ' — no fix written; this one needs a person.',
+    open: `- [ ] Agree <!-- ${point.fix} -->\n- [ ] Disagree <!-- ${point.fix} -->`,
+    agreed: `**Agreed**, merged into ${data.umbrella.pr ? `#${data.umbrella.pr}` : `\`${data.umbrella.branch}\``}.`,
+    disagreed: '**Disagreed**, fix closed. It comes back next review while its rule stands.',
+    conflict: `**Agreed**, but it conflicts with a fix merged before it: resolve #${point.fix} by hand.`,
+    nofix: 'No fix written; this one needs a person.',
   })[point.outcome];
+
+// An explicit link: GitHub expands a bare #N into the fix PR's whole title.
+const fixLink = (point) => (point.fix ? `\nFix: [#${point.fix}](${process.env.GITHUB_SERVER_URL}/${repo}/pull/${point.fix})` : '');
 
 // Written without state, so the PR still counts as unreviewed.
 export const failure = (pr, reason) =>
@@ -43,8 +54,6 @@ export const report = (pr, data) => {
   const { points } = data;
   const head = `Reviewed \`${data.sha.slice(0, 7)}\` ${team(data)}, against ${rulesLink(pr)} · [run](${data.run})${failures(data)}`;
   if (!points.length) return `${head}\n\nNothing in this PR breaks the quality document.`;
-  const list = points
-    .map((point, i) => `${i + 1}. **Rule ${point.rule} · ${point.title}**${point.line ? ` (\`${point.file}:${point.line}\`)` : ''} — ${point.detail}${point.fix ? ` Fix: #${point.fix}` : ''}${outcome(point, data)}`)
-    .join('\n');
+  const list = points.map((point) => `${block(point)}${fixLink(point)}\n\n${outcome(point, data)}`).join('\n\n');
   return `${head}\n\n**Agree** merges a point's fix into \`${data.umbrella.branch}\`, which comes back to this PR as one PR of its own. **Disagree** closes the fix — the point returns on the next review for as long as its rule stands, so settle it for good by changing the quality document instead.\n\n${list}`;
 };

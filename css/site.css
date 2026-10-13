@@ -237,10 +237,16 @@ mock-section b[ok] {
   text-decoration: none;
 }
 
+mock-point {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: calc(var(--unit) * 1);
+}
+
 mock-ticks {
   display: flex;
   gap: calc(var(--unit) * 4);
-  margin-top: calc(var(--unit) * 1.5);
 }
 
 mock-ticks label {

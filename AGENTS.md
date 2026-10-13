@@ -61,7 +61,8 @@ dispatches on `GITHUB_EVENT_NAME` (or `init` / `validate` by name).
   the setting, so it asks for a PR from the default branch into itself and
   reads why GitHub turned it down.
 - [agents.js](package/src/agents.js) — spawn, JSON extraction and the
-  review / judge / fix prompts.
+  review / judge / fix prompts. The judge quotes each point's rule as
+  `statement`; the fix agent answers with a plain account of its change.
 - [review.js](package/src/review.js) — opened, scheduled, review. A review
   checks out the PR head as `underlens-pr-N`, runs reviewers in parallel and
   each settles on its own, then the judge on whichever answered. Only then
@@ -74,7 +75,12 @@ dispatches on `GITHUB_EVENT_NAME` (or `init` / `validate` by name).
   any failure ends the run red.
 - [section.js](package/src/section.js) — the PR section between
   `<!-- underlens -->` markers; its state rides in a base64 comment. A section
-  with state means reviewed: the scheduled run skips it.
+  with state means reviewed: the scheduled run skips it, and its headline reads
+  "This PR was reviewed through Underlens", linked to the site. Each point is
+  one `block`: **Rule N: <statement>**, the rule's own wording as the judge
+  quotes it, then `change`, what the fix agent says it changed (the judge's
+  `detail` when no fix was written). The section adds `Fix: [#N](…)` and the
+  Agree / Disagree boxes; the fix PR's description is the same block.
 - [sync.js](package/src/sync.js) — `edited` acts on ticked
   `- [x] Agree <!-- fix -->` boxes; `closed` maps a fix merged or closed by
   hand onto Agree / Disagree and retires everything when the original closes.

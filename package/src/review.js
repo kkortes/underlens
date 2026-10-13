@@ -4,7 +4,7 @@ import config, { names } from './config.js';
 import { label } from './harnesses.js';
 import { fixPrompt, judgePrompt, json, reviewPrompt, run } from './agents.js';
 import { close, deleteBranch, openPull, openPulls, pull, pullsAllowed, pullsForbidden, runUrl, setBody, summary } from './github.js';
-import { announcement, failure, report, state, write } from './section.js';
+import { announcement, block, failure, report, state, write } from './section.js';
 
 // Flat names: a slash would collide with a branch named plain `underlens`,
 // since git can't hold both `underlens` and `underlens/…`.
@@ -51,17 +51,18 @@ const fix = async (pr, point, i, cfg) => {
   const umbrella = umbrellaOf(pr.number);
   const branch = `${umbrella}-rule-${point.rule}-${i + 1}`;
   await $`git reset -q --hard && git clean -qfd && git checkout -q -B ${branch} ${umbrella}`;
-  await run(cfg.judge, fixPrompt({ pr, rules: cfg.rules, point }), { write: true });
+  const change = (await run(cfg.judge, fixPrompt({ pr, rules: cfg.rules, point }), { write: true })).trim();
   await $`git add -A`;
   if (!(await $`git diff --cached --quiet`.nothrow()).exitCode) return { ...point, fix: null, outcome: 'nofix' };
   await $`git commit -qm ${`Rule ${point.rule}: ${point.title}`} && git push -qf origin ${branch}`;
+  const fixed = { ...point, change };
   const number = await openPull({
     base: umbrella,
     head: branch,
     title: `Underlens · ${point.title}`,
-    body: `Underlens fix for #${pr.number}, rule ${point.rule} of \`underlens-quality-control.md\`.\n\n${point.detail}\n\nAgree or disagree in #${pr.number}'s Underlens section — merging or closing this PR does the same.`,
+    body: `${block(fixed)}\n\nAgree or disagree in #${pr.number}'s Underlens section — merging or closing this PR does the same.`,
   });
-  return { ...point, fix: number, outcome: 'open' };
+  return { ...fixed, fix: number, outcome: 'open' };
 };
 
 const findings = (spec, list) =>

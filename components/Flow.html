@@ -120,31 +120,35 @@
       <step-no>6</step-no>
       <h3>The PR's section becomes the report</h3>
       <p>
-        The section in the original PR is replaced with a short status report: one line per point, each explained and
-        linked to its fix. Each line has an Agree box and a Disagree box. Once reported, the PR isn't reviewed again
-        unless you ask for it by hand.
+        The section in the original PR is replaced with a short status report: one block per point, naming the rule it
+        breaks, saying what its fix changed and linking to it. Each block has an Agree box and a Disagree box. Once
+        reported, the PR isn't reviewed again unless you ask for it by hand.
       </p>
     </step-text>
     <mock-window>
       <mock-bar><b>#42</b> Add checkout flow</mock-bar>
       <mock-body>
         <mock-section>
-          <h4>Underlens</h4>
+          <h4>This PR was reviewed through <u>Underlens</u></h4>
           <p muted>Reviewed <code>9f3c2e1</code> with Claude and GPT, judged by Claude</p>
-          <ol>
-            <li>
-              <b>Rule 3 · Swallowed error in api.js</b>: the catch returns null, so a failed charge reads as no charge.
-              <u>Fix #43</u> · <b ok>Agreed</b>
-            </li>
-            <li>
-              <b>Rule 1 · console.log in cart.js</b>: a debug log ships with the cart. <u>Fix #44</u>
-              <mock-ticks><label><input type="checkbox" disabled /> Agree</label><label><input type="checkbox" disabled /> Disagree</label></mock-ticks>
-            </li>
-            <li>
-              <b>Rule 4 · New dependency in package.json</b>: <code>left-pad</code> for one call. <u>Fix #45</u> ·
-              <b muted>Disagreed</b>
-            </li>
-          </ol>
+          <mock-point>
+            <b>Rule 3: No <code>try</code>/<code>catch</code> that swallows an error.</b>
+            <span>The catch in <code>charge</code> now rethrows, so a failed charge surfaces instead of reading as no charge.</span>
+            <span>Fix: <u>#43</u></span>
+            <b ok>Agreed</b>
+          </mock-point>
+          <mock-point>
+            <b>Rule 1: No <code>console.log</code> in committed code.</b>
+            <span>Removed the debug log from the cart total.</span>
+            <span>Fix: <u>#44</u></span>
+            <mock-ticks><label><input type="checkbox" disabled /> Agree</label><label><input type="checkbox" disabled /> Disagree</label></mock-ticks>
+          </mock-point>
+          <mock-point>
+            <b>Rule 4: No dependency for what a few lines would do.</b>
+            <span>Dropped <code>left-pad</code> for a <code>padStart</code> call at its one use.</span>
+            <span>Fix: <u>#45</u></span>
+            <b muted>Disagreed</b>
+          </mock-point>
         </mock-section>
       </mock-body>
     </mock-window>
