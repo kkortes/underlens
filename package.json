@@ -33,7 +33,7 @@
       "package.json",
       "bun.lock",
       "vercel.json",
-      "CLAUDE.md",
+      "AGENTS.md",
       "README.md"
     ]
   }
