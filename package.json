@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "dev": "\"$(git rev-parse --path-format=absolute --git-common-dir)/../../dev.sh\" 'bunx --bun vite --port $PORT --strictPort'",
-    "build": "vibe compile && cp -r package/templates compiled/templates"
+    "build": "vibe compile && cp -r package/templates compiled/templates",
+    "publish:check": "cd package && npm pack --dry-run",
+    "publish:underlens": "bun publish:check && ./scripts/publish.sh"
   },
   "dependencies": {
     "@ape-egg/codie": "^0.2.0",
@@ -26,6 +28,7 @@
     "componentsAsIs": false,
     "skipFiles": [
       "package",
+      "scripts",
       "vite.config.js",
       "package.json",
       "bun.lock",
