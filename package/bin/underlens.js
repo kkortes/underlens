@@ -1,20 +1,20 @@
 #!/usr/bin/env bun
 import init from '../src/init.js';
 import validate from '../src/validate.js';
-import { announce, nightly, review } from '../src/review.js';
+import { opened, review, scheduled } from '../src/review.js';
 import { closed, ticked } from '../src/sync.js';
 import { event } from '../src/github.js';
 
 const pullRequest = {
-  opened: announce,
-  reopened: announce,
+  opened,
+  reopened: opened,
   edited: ticked,
   closed,
 };
 
 const ci = {
-  schedule: nightly,
-  workflow_dispatch: () => (process.env.PR ? review(Number(process.env.PR), { manual: true }) : validate()),
+  schedule: scheduled,
+  workflow_dispatch: () => (process.env.PR ? review(Number(process.env.PR)) : validate()),
   pull_request: () => pullRequest[event.action]?.(event.pull_request.number),
 };
 

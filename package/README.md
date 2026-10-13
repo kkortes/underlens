@@ -2,7 +2,7 @@
 
 Nightly code review held to rules you wrote, run from a GitHub workflow on your own AI subscriptions. Guide: [underlens.korte.kim](https://underlens.korte.kim).
 
-Every open PR gets a section saying when it will be reviewed. When the time comes, one reviewer per configured harness reads `underlens-quality-control.md`, the diff and the codebase, and reports where the PR breaks a numbered rule. A judge folds the reports into points and writes one fix PR per point, into an umbrella branch cut from the PR. The PR's section becomes a status report with **Agree** (merge the fix) and **Disagree** (close it) per point. A disagreed point returns on every review while its rule stands; only changing the code or the rule settles it.
+The workflow's triggers decide when a PR is reviewed. Then one reviewer per configured harness reads `underlens-quality-control.md`, the diff and the codebase, and reports where the PR breaks a numbered rule. A judge folds the reports into points and writes one fix PR per point, into an umbrella branch cut from the PR. The PR's section becomes a status report with **Agree** (merge the fix) and **Disagree** (close it) per point. A disagreed point returns on every review while its rule stands; only changing the code or the rule settles it.
 
 ## Setup
 
@@ -15,9 +15,9 @@ git add -A && git commit -m "add underlens" && git push
 gh workflow run underlens.yml     # checks every configured harness signs in
 ```
 
-- `underlens.config.js`: `reviewers`, `judge`, `when` (`nightly` | `opened` | `manual`) and optional `models`.
+- `underlens.config.js`: `reviewers`, `judge` and optional `models`.
 - `underlens-quality-control.md`: the numbered, human-curated rules.
-- `.github/workflows/underlens.yml`: triggers, permissions and `bunx @ape-egg/underlens@1`.
+- `.github/workflows/underlens.yml`: triggers, permissions and `bunx @ape-egg/underlens@1`. The triggers you list pick when reviews run.
 
 ## Harnesses
 
@@ -31,11 +31,11 @@ gh workflow run underlens.yml     # checks every configured harness signs in
 
 ## Commands
 
-The workflow runs `underlens` with no argument; it acts on the event:
+The workflow runs `underlens` with no argument; it acts on the event, so the triggers you list decide when reviews run:
 
-- `schedule`: reviews every open, non-draft PR that hasn't been reviewed yet (`when: 'nightly'`).
+- `schedule`: reviews every open, non-draft PR that hasn't been reviewed yet.
 - `workflow_dispatch`: with `pr`, reviews that PR now; without, validates every harness.
-- `pull_request` `opened`/`reopened`: announces, or reviews at once with `when: 'opened'`.
+- `pull_request` `opened`/`reopened`: reviews that PR at once. The template leaves these out; add them to review each PR as it opens.
 - `pull_request` `edited`: acts on ticked Agree / Disagree boxes.
 - `pull_request` `closed`: a fix merged or closed by hand counts as Agree / Disagree, and a closed PR takes its Underlens branches and PRs with it.
 

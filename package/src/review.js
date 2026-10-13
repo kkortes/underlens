@@ -4,7 +4,7 @@ import config, { names } from './config.js';
 import harnesses from './harnesses.js';
 import { fixPrompt, judgePrompt, json, reviewPrompt, run } from './agents.js';
 import { close, deleteBranch, openPull, openPulls, pull, runUrl, setBody, summary } from './github.js';
-import { announced, announcement, report, state, write } from './section.js';
+import { announcement, report, state, write } from './section.js';
 
 export const umbrellaOf = (n) => `underlens/pr-${n}`;
 const own = (pr) => pr.headRefName.startsWith('underlens/');
@@ -13,16 +13,14 @@ const own = (pr) => pr.headRefName.startsWith('underlens/');
 // which a fork's PR doesn't have — forks aren't reviewed.
 const reviewable = (pr) => !pr.isCrossRepository && !own(pr);
 
-export const announce = async (n) => {
+export const opened = async (n) => {
   const [cfg, pr] = await Promise.all([config(), pull(n)]);
-  if (!reviewable(pr) || announced(pr.body)) return;
+  if (!reviewable(pr)) return;
   await setBody(n, write(pr.body, announcement(pr, cfg)));
-  if (cfg.when === 'opened') await review(n);
+  await review(n);
 };
 
-export const nightly = async () => {
-  const cfg = await config();
-  if (cfg.when !== 'nightly') return console.info(`underlens.config.js says when: '${cfg.when}' — nothing to do at night`);
+export const scheduled = async () => {
   const due = (await openPulls()).filter((pr) => reviewable(pr) && !pr.isDraft && !state(pr.body));
   console.info(due.length ? `Reviewing ${due.map((pr) => `#${pr.number}`).join(', ')}` : 'No open PR waits for a review');
   for (const pr of due) await review(pr.number);

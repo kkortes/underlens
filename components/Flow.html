@@ -30,23 +30,21 @@
   <flow-step>
     <step-text>
       <step-no>2</step-no>
-      <h3>A pull request says what will happen</h3>
+      <h3>Your workflow says when</h3>
       <p>
-        When a PR opens, Underlens adds a section to its description that says when the review runs and who does it,
-        read from <code>underlens.config.js</code>. By default that's once a night.
+        The triggers in <code>.github/workflows/underlens.yml</code> decide when a PR is reviewed. A schedule reviews
+        every open PR not reviewed yet. A PR opening reviews it at once. Run workflow reviews one on demand. List the
+        ones you want. The template reviews once a night.
       </p>
     </step-text>
     <mock-window>
-      <mock-bar><b>#42</b> Add checkout flow</mock-bar>
+      <mock-bar>.github/workflows/underlens.yml</mock-bar>
       <mock-body>
-        <p muted>Moves payment into its own step and adds the receipt page.</p>
-        <mock-section>
-          <h4>Underlens</h4>
-          <p>
-            Underlens reviews this PR at the next nightly run (03:00 UTC) with Claude and GPT, judged by Claude,
-            against <u>underlens-quality-control.md</u>.
-          </p>
-        </mock-section>
+        <ol>
+          <li><code>schedule</code>: every open PR not reviewed yet, at the <code>cron</code> hour</li>
+          <li><code>pull_request</code> <code>opened</code>: that PR, right away</li>
+          <li><code>workflow_dispatch</code>: the PR number you give</li>
+        </ol>
       </mock-body>
     </mock-window>
   </flow-step>
@@ -54,7 +52,7 @@
   <flow-step>
     <step-text>
       <step-no>3</step-no>
-      <h3>Reviewers run side by side at night</h3>
+      <h3>Reviewers run side by side</h3>
       <p>
         When the time comes, one agent per configured harness starts in CI and does a full review. Each reads the
         quality document first, then the PR's diff, then as much of the codebase as it needs. Each one reports only

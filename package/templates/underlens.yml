@@ -1,10 +1,15 @@
 name: Underlens
 
+# The triggers decide when PRs are reviewed. schedule reviews every open,
+# non-draft PR not reviewed yet, at the cron's hour in UTC. Add opened and
+# reopened to the pull_request types to review each PR as it opens. Run
+# workflow reviews one PR on demand. Keep edited and closed: they act on
+# Agree and Disagree, and clean up after a closed PR.
 on:
   schedule:
     - cron: '0 3 * * *'
   pull_request:
-    types: [opened, reopened, edited, closed]
+    types: [edited, closed]
   workflow_dispatch:
     inputs:
       pr:

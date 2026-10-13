@@ -34,7 +34,6 @@ export default async () => {
   const cfg = await config();
   const rows = await Promise.all(cfg.harnesses.map((id) => check(id, cfg)));
   const waiting = (await openPulls()).filter((pr) => !pr.headRefName.startsWith('underlens/') && !pr.isDraft && !pr.body?.includes('<!-- underlens:state'));
-  const next = { nightly: `the nightly run at ${cfg.nightlyAt}`, opened: 'the next PR that opens', manual: 'a manual run' }[cfg.when];
 
   rows.forEach((row) => console.info(`${row.ready ? '✓' : '✗'} ${row.name} (${row.roles}, ${row.auth}): ${row.note}`));
   summary(
@@ -46,7 +45,7 @@ export default async () => {
       ...rows.map((row) => `| ${row.ready ? '✅' : '❌'} | ${row.name} | ${row.roles} | ${row.auth} | ${row.note} |`),
       '',
       rows.every((row) => row.ready)
-        ? `Ready for ${next}. ${waiting.length} open PR${waiting.length === 1 ? '' : 's'} wait${waiting.length === 1 ? 's' : ''} for review.`
+        ? `Ready. ${waiting.length} open PR${waiting.length === 1 ? '' : 's'} wait${waiting.length === 1 ? 's' : ''} for review.`
         : 'Not ready: fix the rows above, then run this again. Setup for each harness: https://underlens.korte.kim/#harnesses',
     ].join('\n'),
   );

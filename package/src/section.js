@@ -12,8 +12,6 @@ export const state = (body) => {
   return encoded && JSON.parse(Buffer.from(encoded, 'base64').toString());
 };
 
-export const announced = (body) => fence.test(body ?? '');
-
 export const write = (body, content, data) =>
   `${(body ?? '').replace(fence, '').trimEnd()}\n\n<!-- underlens -->\n### Underlens\n\n${content}\n${data ? `<!-- underlens:state ${Buffer.from(JSON.stringify(data)).toString('base64')} -->\n` : ''}<!-- /underlens -->`.trimStart();
 
@@ -23,12 +21,7 @@ export const ticks = (body) =>
 const rulesLink = (pr) => `[\`underlens-quality-control.md\`](${process.env.GITHUB_SERVER_URL}/${repo}/blob/${pr.baseRefName}/underlens-quality-control.md)`;
 const team = (config) => `with ${names(config.reviewers)}, judged by ${names([config.judge])}`;
 
-export const announcement = (pr, config) =>
-  ({
-    nightly: `Underlens reviews this PR at the next nightly run (${config.nightlyAt}) ${team(config)}, against ${rulesLink(pr)}. Each point it raises arrives as its own fix PR, to agree or disagree with right here. To review now: **Actions → Underlens → Run workflow**, PR \`${pr.number}\`.`,
-    opened: `Underlens is reviewing this PR now ${team(config)}, against ${rulesLink(pr)}. [Follow the run](${runUrl}).`,
-    manual: `Underlens reviews this PR only when asked ${team(config)}, against ${rulesLink(pr)}: **Actions → Underlens → Run workflow**, PR \`${pr.number}\`.`,
-  })[config.when];
+export const announcement = (pr, config) => `Underlens is reviewing this PR now ${team(config)}, against ${rulesLink(pr)}. [Follow the run](${runUrl}).`;
 
 const outcome = (point, data) =>
   ({

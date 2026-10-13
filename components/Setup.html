@@ -11,7 +11,7 @@
 
     <file-block>
       <h4><code>underlens.config.js</code></h4>
-      <p>Which harnesses review, which one judges, and when. The defaults are Claude for both, once a night.</p>
+      <p>Which harnesses review and which one judges. The defaults are Claude for both.</p>
       <codie dark data-src="underlens.config.js"></codie>
     </file-block>
 
@@ -27,8 +27,9 @@
     <file-block>
       <h4><code>.github/workflows/underlens.yml</code></h4>
       <p>
-        The triggers and one step that runs the package. The night's hour is the <code>cron</code> line, in UTC.
-        GitHub only schedules from the workflow file, so the hour can't live in the config.
+        The triggers and one step that runs the package. The triggers decide when PRs are reviewed: the template
+        reviews once a night at the <code>cron</code> hour, in UTC. Add <code>opened</code> and <code>reopened</code>
+        to review each PR as it opens, or drop <code>schedule</code> to review only when you ask.
       </p>
       <codie dark data-src="underlens.yml"></codie>
     </file-block>
@@ -78,12 +79,12 @@ gh secret set CLAUDE_CODE_OAUTH_TOKEN</codie>
   <setup-after>
     <h3>From then on</h3>
     <ul>
-      <li>Every new PR gets its Underlens section, saying when it will be reviewed and by whom.</li>
+      <li>Every PR gets its Underlens section once it's reviewed, on the triggers your workflow lists.</li>
       <li>
         To review a PR right away, or review it again: Actions → Underlens → Run workflow, with its number. Each review
         starts fresh and closes the fixes left open from the last one.
       </li>
-      <li>Draft PRs wait until they're ready for review. PRs from forks aren't reviewed, because the fixes need a branch in your repo.</li>
+      <li>The schedule skips draft PRs until they're ready for review. PRs from forks aren't reviewed, because the fixes need a branch in your repo.</li>
       <li>
         Fix PRs opened by the workflow don't trigger your other workflows, which is GitHub's rule for its token. Your CI
         runs once you merge the agreed fixes into your PR.

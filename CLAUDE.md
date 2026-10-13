@@ -36,7 +36,8 @@ dispatches on `GITHUB_EVENT_NAME` (or `init` / `validate` by name).
 
 - [config.js](package/src/config.js) — loads `underlens.config.js` and the
   quality document from the workflow's checkout (default branch on schedule and
-  dispatch), and reads the nightly hour back from the workflow's cron.
+  dispatch). The workflow's triggers alone decide when reviews run; a config
+  that still sets `when` throws.
 - [harnesses.js](package/src/harnesses.js) — one adapter per harness: its
   secret, whether that's a subscription, and the headless CLI command for
   read-only review and write-mode fixes. Prompts go in on stdin (Grok: a
@@ -46,14 +47,14 @@ dispatches on `GITHUB_EVENT_NAME` (or `init` / `validate` by name).
   message, so it runs with `--output-format json`.
 - [agents.js](package/src/agents.js) — spawn, JSON extraction and the
   review / judge / fix prompts.
-- [review.js](package/src/review.js) — announce, nightly, review. A review
+- [review.js](package/src/review.js) — opened, scheduled, review. A review
   retires leftovers of the last one, checks out the PR head as
   `underlens/pr-N`, runs reviewers in parallel, the judge, then one fix per
   point on `underlens/pr-N-rule-R-i` with a PR into `underlens/pr-N`. Reports
   land in the job summary; the PR section is rewritten last.
 - [section.js](package/src/section.js) — the PR section between
   `<!-- underlens -->` markers; its state rides in a base64 comment. A section
-  with state means reviewed: the nightly run skips it.
+  with state means reviewed: the scheduled run skips it.
 - [sync.js](package/src/sync.js) — `edited` acts on ticked
   `- [x] Agree <!-- fix -->` boxes; `closed` maps a fix merged or closed by
   hand onto Agree / Disagree and retires everything when the original closes.
