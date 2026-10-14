@@ -6,9 +6,6 @@ on:
   pull_request:
     types: [edited, closed]
   workflow_dispatch:
-    inputs:
-      pr:
-        description: PR to review now. Leave empty to check every harness signs in.
 
 permissions:
   contents: write

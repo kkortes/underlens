@@ -64,8 +64,8 @@ gh secret set CLAUDE_CODE_OAUTH_TOKEN</codie>
   <setup-step id="validate">
     <h3><step-no>4</step-no> Commit, then validate before a real run</h3>
     <p>
-      Push the three files to your default branch, then run the workflow by hand with no PR number: Actions → Underlens
-      → Run workflow, PR left empty, or from the repo folder:
+      Push the three files to your default branch, then run the workflow by hand on that branch: Actions → Underlens
+      → Run workflow, with the default branch under "Use workflow from", or from the repo folder:
     </p>
     <codie dark>gh workflow run underlens.yml
 gh run watch</codie>
@@ -96,7 +96,8 @@ gh run watch</codie>
     <ul>
       <li>Every PR gets its Underlens section once it's reviewed, on the triggers your workflow lists.</li>
       <li>
-        To review a PR right away, or review it again: Actions → Underlens → Run workflow, with its number. Each review
+        To review a PR right away, or review it again: Actions → Underlens → Run workflow, with its branch under "Use
+        workflow from", or <code>gh workflow run underlens.yml --ref &lt;branch&gt;</code>. Each review
         starts fresh and closes the fixes left open from the last one.
       </li>
       <li>The schedule skips draft PRs until they're ready for review. PRs from forks aren't reviewed, because the fixes need a branch in your repo.</li>

@@ -3,7 +3,7 @@ import init from '../src/init.js';
 import validate from '../src/validate.js';
 import { opened, review, scheduled } from '../src/review.js';
 import { closed, ticked } from '../src/sync.js';
-import { event } from '../src/github.js';
+import { event, pullOf } from '../src/github.js';
 
 const pullRequest = {
   opened,
@@ -14,7 +14,11 @@ const pullRequest = {
 
 const ci = {
   schedule: scheduled,
-  workflow_dispatch: () => (event.inputs?.pr ? review(Number(event.inputs.pr)) : validate()),
+  workflow_dispatch: async () => {
+    const branch = process.env.GITHUB_REF_NAME;
+    const n = branch !== event.repository.default_branch && (await pullOf(branch));
+    return n ? review(n) : validate();
+  },
   pull_request: () => pullRequest[event.action]?.(event.pull_request.number),
 };
 

@@ -23,7 +23,7 @@ gh workflow run underlens.yml     # checks every configured harness signs in
 
 Three parts of that file stay in your repo because GitHub won't let them move: the triggers, the `permissions` (a called workflow can't widen its caller's token, and a new repo's token is read-only), and the `secrets` (`secrets: inherit` only reaches workflows of the same owner). Forward only the secrets of the harnesses you use, if you like; validate names any that's missing.
 
-The called workflow is four steps, if you'd rather run them yourself: `actions/checkout@v4`, `oven-sh/setup-bun@v2`, then `bunx @ape-egg/underlens@1` with `GH_TOKEN: ${{ github.token }}` and each harness secret in its `env`. Underlens reads the `pr` input from the event and deepens a shallow checkout itself.
+The called workflow is four steps, if you'd rather run them yourself: `actions/checkout@v4`, `oven-sh/setup-bun@v2`, then `bunx @ape-egg/underlens@1` with `GH_TOKEN: ${{ github.token }}` and each harness secret in its `env`. Check out the default branch (`ref: ${{ github.event.repository.default_branch }}`) so a PR can't rewrite the rules it's reviewed by. Underlens finds a dispatched branch's PR itself and deepens a shallow checkout itself.
 
 ## Harnesses
 
@@ -50,14 +50,14 @@ The same harness can appear more than once on different models; each string runs
 
 ## Validate before a real run
 
-Run the workflow with the PR number left empty (`gh workflow run underlens.yml`, or Actions → Underlens → Run workflow). It pings every configured string on its exact harness and model, writes one row per string to the job summary, checks GitHub lets Actions open pull requests (Settings → Actions → General → Workflow permissions → "Allow GitHub Actions to create and approve pull requests"), and fails until all of it is ready. Every review checks that setting again before it starts.
+Run the workflow on your default branch (`gh workflow run underlens.yml`, or Actions → Underlens → Run workflow with the default branch picked under "Use workflow from"). It pings every configured string on its exact harness and model, writes one row per string to the job summary, checks GitHub lets Actions open pull requests (Settings → Actions → General → Workflow permissions → "Allow GitHub Actions to create and approve pull requests"), and fails until all of it is ready. Every review checks that setting again before it starts.
 
 ## Commands
 
 The workflow runs `underlens` with no argument; it acts on the event, so the triggers you list decide when reviews run:
 
 - `schedule`: reviews every open, non-draft PR that hasn't been reviewed yet.
-- `workflow_dispatch`: with `pr`, reviews that PR now; without, validates every reviewer and the judge.
+- `workflow_dispatch`: run on a PR's branch ("Use workflow from", or `gh workflow run underlens.yml --ref <branch>`), reviews that open PR now; on the default branch, or a branch with no open PR, validates every reviewer and the judge. The branch needs `.github/workflows/underlens.yml` for GitHub to run it there, so rebase a branch cut before Underlens was added.
 - `pull_request` `opened`/`reopened`: reviews that PR at once. The template leaves these out; add them to review each PR as it opens.
 - `pull_request` `edited`: acts on ticked Agree / Disagree boxes.
 - `pull_request` `closed`: a fix merged or closed by hand counts as Agree / Disagree, and a closed PR takes its Underlens branches and PRs with it.
