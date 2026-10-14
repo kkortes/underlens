@@ -1,3 +1,4 @@
+import { backlog } from './agents.js';
 import { names } from './config.js';
 import { label } from './harnesses.js';
 import { repo, runUrl } from './github.js';
@@ -28,9 +29,16 @@ const team = (config) => `with ${names(config.reviewers)}, judged by ${names([co
 
 export const announcement = (pr, config) => `Underlens is reviewing this PR now ${team(config)}, against ${rulesLink(pr)}. [Follow the run](${runUrl}).`;
 
-// The rule in its own words, then what the fix changed. State written before
-// fixes explained themselves carries only the judge's title and detail.
-export const block = (point) => `**Rule ${point.rule}: ${point.statement ?? point.title}**\n${point.change ?? point.detail}`;
+const origins = {
+  pr: 'Introduced by this PR.',
+  combined: 'This PR together with existing code.',
+  existing: 'Already in the codebase before this PR.',
+};
+
+// The rule in its own words, where the drift comes from, then what the fix
+// changed. State written before fixes explained themselves carries only the
+// judge's title and detail, and state from diff-only reviews no origin.
+export const block = (point) => `**Rule ${point.rule}: ${point.statement ?? point.title}**\n*${origins[point.origin ?? 'pr']}*\n${point.change ?? point.detail}`;
 
 const outcome = (point, data) =>
   ({
@@ -55,5 +63,5 @@ export const report = (pr, data) => {
   const head = `Reviewed \`${data.sha.slice(0, 7)}\` ${team(data)}, against ${rulesLink(pr)} · [run](${data.run})${failures(data)}`;
   if (!points.length) return `${head}\n\nNothing in this PR breaks the quality document.`;
   const list = points.map((point) => `${block(point)}${fixLink(point)}\n\n${outcome(point, data)}`).join('\n\n');
-  return `${head}\n\n**Agree** merges a point's fix into \`${data.umbrella.branch}\`, which comes back to this PR as one PR of its own. **Disagree** closes the fix — the point returns on the next review for as long as its rule stands, so settle it for good by changing the quality document instead.\n\n${list}`;
+  return `${head}\n\n**Agree** merges a point's fix into \`${data.umbrella.branch}\`, which comes back to this PR as one PR of its own. **Disagree** closes the fix — the point returns on the next review for as long as its rule stands, so settle it for good by changing the quality document instead.\n\n${list}${data.held ? `\n\n${data.held} more point${data.held === 1 ? '' : 's'} already in the codebase ${data.held === 1 ? 'is' : 'are'} held back: a review takes on at most ${backlog} of those at a time.` : ''}`;
 };

@@ -2,7 +2,7 @@ import { $ } from 'bun';
 
 import config, { names } from './config.js';
 import { label } from './harnesses.js';
-import { fixPrompt, judgePrompt, json, reviewPrompt, run } from './agents.js';
+import { backlog, fixPrompt, judgePrompt, json, reviewPrompt, run } from './agents.js';
 import { close, deleteBranch, openPull, openPulls, pull, pullsAllowed, pullsForbidden, runUrl, setBody, summary } from './github.js';
 import { announcement, block, failure, report, state, write } from './section.js';
 
@@ -65,6 +65,14 @@ const fix = async (pr, point, i, cfg) => {
   return { ...fixed, fix: number, outcome: 'open' };
 };
 
+// The pull request's own drift first, all of it; then at most `backlog`
+// points of drift that was already in the codebase.
+const triage = (points) => {
+  const existing = points.filter((point) => point.origin === 'existing');
+  const brought = points.filter((point) => point.origin !== 'existing').sort((a, b) => (a.origin === 'combined') - (b.origin === 'combined'));
+  return { kept: [...brought, ...existing.slice(0, backlog)], held: Math.max(existing.length - backlog, 0) };
+};
+
 const findings = (spec, list) =>
   `<details><summary>${label(spec)}: ${list.length} finding${list.length === 1 ? '' : 's'}</summary>\n\n\`\`\`json\n${JSON.stringify(list, null, 2)}\n\`\`\`\n</details>`;
 
@@ -93,13 +101,13 @@ const examine = async (pr, cfg) => {
   failed.forEach(({ spec, reason }) => summary(`${label(spec)} failed: ${reason}`));
   if (failed.length === settled.length) throw new Error(`every reviewer failed, nothing was judged: ${failed.map(({ spec, reason }) => `${spec} (${reason})`).join('; ')}`);
 
-  const { points } = json(await run(cfg.judge, judgePrompt({ pr, rules: cfg.rules, reports })));
-  summary(`Judged by ${names([cfg.judge])}: ${points.length} point${points.length === 1 ? '' : 's'}`);
+  const { kept: points, held } = triage(json(await run(cfg.judge, judgePrompt({ pr, rules: cfg.rules, diff, reports }))).points);
+  summary(`Judged by ${names([cfg.judge])}: ${points.length} point${points.length === 1 ? '' : 's'}${held ? `, ${held} more already in the codebase held back` : ''}`);
 
   // Only now is there a review to replace the last one with: a run that fails
   // before this leaves the earlier review and its fixes standing.
   await retire(n);
-  const data = { sha: pr.headRefOid, run: runUrl, reviewers: Object.keys(reports), failed, judge: cfg.judge, umbrella: { branch: umbrellaOf(n), pr: null }, points: [] };
+  const data = { sha: pr.headRefOid, run: runUrl, reviewers: Object.keys(reports), failed, judge: cfg.judge, umbrella: { branch: umbrellaOf(n), pr: null }, held, points: [] };
   if (points.length) await $`git push -qf origin ${umbrellaOf(n)}`;
   for (const [i, point] of points.entries()) data.points.push(await fix(pr, point, i, cfg));
 

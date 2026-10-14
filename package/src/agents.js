@@ -38,23 +38,42 @@ The quality document below is curated by a human and is the only standard this r
 ${rules}
 </quality-document>`;
 
+// Drift that was already in the codebase is worked down a few points per
+// review, so the first review of an old codebase doesn't open a fix PR for
+// every line of it. What the pull request brings in is always reported.
+export const backlog = 10;
+
+const diffBlock = (diff) => `<pull-request-diff>
+${diff}
+</pull-request-diff>`;
+
+const origins = `- "pr": the pull request introduces it: the code that breaks the rule is in the diff.
+- "combined": the pull request together with existing code breaks it: the change and code it leaves alone break the rule only together, or the change makes drift that was already there worse.
+- "existing": it was there before the pull request, which doesn't make it worse.`;
+
 export const reviewPrompt = ({ pr, rules, diff }) => `You are an Underlens reviewer. ${context({ pr, rules })}
 
-<pull-request-diff>
-${diff}
-</pull-request-diff>
+${diffBlock(diff)}
 
-Read the quality document first, then the diff, then whatever of the codebase you need to judge the diff in context. Do not edit any file.
+The quality document holds the whole codebase, not only this pull request: review the code at the pull request's head against it. Do not edit any file.
 
-Report only where the code this pull request adds or changes breaks a numbered rule. Code outside the diff counts only where the pull request makes it worse. Never report taste or anything no rule decides, and never mention a rule the code follows.
+Work rule by rule. Search the codebase for what each rule forbids or demands, and read only what the search turns up and what a rule needs read whole. Start with the files the diff touches and the code they reach, then sweep the rest. Skip what no person here writes: dependencies, vendored and generated files, lock files and build output.
+
+The diff is what this pull request changes against its base; use it to say where each finding comes from:
+${origins}
+
+Report every "pr" and "combined" finding, and at most ${backlog} "existing" ones, those nearest the code this pull request touches first. Never report taste or anything no rule decides, and never mention a rule the code follows.
 
 Answer with JSON only, nothing around it:
-{"findings":[{"rule":4,"file":"src/app.js","line":12,"detail":"what breaks the rule, in one or two sentences","fix":"the concrete change that satisfies the rule"}]}
+{"findings":[{"rule":4,"origin":"pr","file":"src/app.js","line":12,"detail":"what breaks the rule, in one or two sentences","fix":"the concrete change that satisfies the rule"}]}
 An empty findings list is a valid answer.`;
 
-export const judgePrompt = ({ pr, rules, reports }) => `You are the Underlens judge. ${context({ pr, rules })}
+export const judgePrompt = ({ pr, rules, diff, reports }) => `You are the Underlens judge. ${context({ pr, rules })}
 
-Reviewers on different harnesses each reported where this pull request breaks the quality document:
+${diffBlock(diff)}
+
+Reviewers on different harnesses each reported where the code at this pull request's head breaks the quality document, and where each break comes from:
+${origins}
 
 <reports>
 ${JSON.stringify(reports, null, 2)}
@@ -63,11 +82,12 @@ ${JSON.stringify(reports, null, 2)}
 Consolidate them into points. Do not edit any file.
 - One point per problem: findings about the same rule at the same place are one point, however differently they are worded.
 - Check every finding against the code yourself. Drop it when the rule it cites doesn't exist or the code doesn't actually break it.
+- Check every point's origin against the diff, and correct it where the reviewers got it wrong or disagree.
 - Title each point after its rule and its place, plainly, so the same drift reads the same on every review.
 - Give each point its rule's statement: the rule's own wording from the quality document, its heading or its line as written there, not a description of this point.
 
 Answer with JSON only, nothing around it:
-{"points":[{"rule":4,"statement":"No defensive checks.","title":"No defensive checks in src/app.js","file":"src/app.js","line":12,"detail":"one or two sentences","fix":"the concrete change","raisedBy":["claude-opus-5-5","gpt"]}]}
+{"points":[{"rule":4,"origin":"pr","statement":"No defensive checks.","title":"No defensive checks in src/app.js","file":"src/app.js","line":12,"detail":"one or two sentences","fix":"the concrete change","raisedBy":["claude-opus-5-5","gpt"]}]}
 An empty points list is a valid answer.`;
 
 export const fixPrompt = ({ pr, rules, point }) => `You are applying one Underlens fix. ${context({ pr, rules })}

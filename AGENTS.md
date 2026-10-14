@@ -1,8 +1,8 @@
 # CLAUDE.md
 
-Underlens is nightly PR review held to a human-curated quality document, run
-on the developer's own harness subscriptions from a GitHub workflow. This
-folder holds two things: the presentational site
+Underlens is nightly review of the codebase at each PR's head, held to a
+human-curated quality document, run on the developer's own harness
+subscriptions from a GitHub workflow. This folder holds two things: the presentational site
 (https://underlens.korte.kim), which only explains how it works and how to add
 it, and the npm package `@ape-egg/underlens` in [package/](package/), which is
 the action itself.
@@ -82,13 +82,25 @@ review unshallows it before it diffs.
   the setting, so it asks for a PR from the default branch into itself and
   reads why GitHub turned it down.
 - [agents.js](package/src/agents.js) — spawn, JSON extraction and the
-  review / judge / fix prompts. The judge quotes each point's rule as
-  `statement`; the fix agent answers with a plain account of its change.
+  review / judge / fix prompts. Reviewers hold the whole codebase at the PR
+  head to the quality document, not only the diff; the diff rides along so
+  each finding carries an `origin`: `pr` (the PR brings it in), `combined`
+  (the PR together with code it leaves alone, or the PR worsening drift
+  already there) or `existing` (there before the PR). The judge gets the diff
+  too and corrects origins. Nothing of the codebase is pasted into a prompt:
+  reviewers search it rule by rule with their read-only tools, starting from
+  the files the diff touches, so a prompt grows with the diff and the rules,
+  never the repo. `backlog` (10) caps `existing` findings per reviewer and
+  `existing` points per review, so an old codebase is worked down a few fixes
+  at a time. The judge quotes each point's rule as `statement`; the fix agent
+  answers with a plain account of its change.
 - [review.js](package/src/review.js) — opened, scheduled, review. A review
   checks out the PR head as `underlens-pr-N`, runs reviewers in parallel and
   each settles on its own, then the judge on whichever answered. Only then
-  does it retire leftovers of the last review, and writes one fix per point on
-  `underlens-pr-N-rule-R-i` with a PR into `underlens-pr-N`. Reports land in
+  does it rank the points (`pr`, then `combined`, then at most `backlog`
+  `existing`; the rest counts as `held`), retire leftovers of the last review,
+  and write one fix per point on `underlens-pr-N-rule-R-i` with a PR into
+  `underlens-pr-N`. Reports land in
   the job summary; the PR section is rewritten last and names each failed
   reviewer on one line. No reviewer answering, or the judge failing, fails
   that PR: an earlier review stays, a PR without one gets a stateless failure
@@ -99,8 +111,10 @@ review unshallows it before it diffs.
   with state means reviewed: the scheduled run skips it, and its headline reads
   "This PR was reviewed through Underlens", linked to the site. Each point is
   one `block`: **Rule N: <statement>**, the rule's own wording as the judge
-  quotes it, then `change`, what the fix agent says it changed (the judge's
-  `detail` when no fix was written). The section adds `Fix: [#N](…)` and the
+  quotes it, then its origin in a line of italics (state from before origins
+  reads as the PR's), then `change`, what the fix agent says it changed (the
+  judge's `detail` when no fix was written). Held-back points are counted
+  under the list. The section adds `Fix: [#N](…)` and the
   Agree / Disagree boxes; the fix PR's description is the same block.
 - [sync.js](package/src/sync.js) — `edited` acts on ticked
   `- [x] Agree <!-- fix -->` boxes; `closed` maps a fix merged or closed by

@@ -1,6 +1,6 @@
 # Quality control
 
-Underlens holds every pull request to these rules and to nothing else. Each rule is numbered and decidable: a reviewer can point at a line and say which rule it breaks. Taste no rule decides is never raised.
+Underlens holds the whole codebase to these rules and to nothing else, on every pull request it reviews: what the pull request brings in, what it causes together with existing code, and what was already there. Each rule is numbered and decidable: a reviewer can point at a line and say which rule it breaks. Taste no rule decides is never raised.
 
 A point you disagree with comes back on every review for as long as its rule stands. That's by design — to settle it, change the code or change the rule here.
 
