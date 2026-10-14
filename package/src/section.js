@@ -61,7 +61,7 @@ const failures = (data) => (data.failed ?? []).map(({ spec, reason }) => `\n- ${
 export const report = (pr, data) => {
   const { points } = data;
   const head = `Reviewed \`${data.sha.slice(0, 7)}\` ${team(data)}, against ${rulesLink(pr)} · [run](${data.run})${failures(data)}`;
-  if (!points.length) return `${head}\n\nNothing in this PR breaks the quality document.`;
+  if (!points.length) return `${head}\n\nIt was judged that **nothing** in this PR and/or codebase is drifting from the quality control document.`;
   const list = points.map((point) => `${block(point)}${fixLink(point)}\n\n${outcome(point, data)}`).join('\n\n');
   return `${head}\n\n**Agree** merges a point's fix into \`${data.umbrella.branch}\`, which comes back to this PR as one PR of its own. **Disagree** closes the fix — the point returns on the next review for as long as its rule stands, so settle it for good by changing the quality document instead.\n\n${list}${data.held ? `\n\n${data.held} more point${data.held === 1 ? '' : 's'} already in the codebase ${data.held === 1 ? 'is' : 'are'} held back: a review takes on at most ${backlog} of those at a time.` : ''}`;
 };
