@@ -33,7 +33,7 @@
       <h3>Your workflow says when</h3>
       <p>
         The triggers in <code>.github/workflows/underlens.yml</code> decide when a PR is reviewed. A schedule reviews
-        every open PR not reviewed yet. A PR opening reviews it at once. Running the workflow on a PR's branch reviews that PR on demand. List the
+        every open PR not reviewed yet. A PR opening reviews it at once. Run workflow reviews the PR of the branch you name, on demand. List the
         ones you want. The template reviews once a night.
       </p>
     </step-text>
@@ -43,7 +43,7 @@
         <ol>
           <li><code>schedule</code>: every open PR not reviewed yet, at the <code>cron</code> hour</li>
           <li><code>pull_request</code> <code>opened</code>: that PR, right away</li>
-          <li><code>workflow_dispatch</code>: the PR of the branch you run it on</li>
+          <li><code>workflow_dispatch</code>: the PR of the branch you name</li>
         </ol>
       </mock-body>
     </mock-window>
@@ -122,7 +122,7 @@
       <p>
         The section in the original PR is replaced with a short status report: one block per point, naming the rule it
         breaks, saying what its fix changed and linking to it. Each block has an Agree box and a Disagree box. Once
-        reported, the PR isn't reviewed again unless you run the workflow on its branch.
+        reported, the PR isn't reviewed again unless you run the workflow for its branch.
       </p>
     </step-text>
     <mock-window>

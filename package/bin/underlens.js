@@ -3,7 +3,7 @@ import init from '../src/init.js';
 import validate from '../src/validate.js';
 import { opened, review, scheduled } from '../src/review.js';
 import { closed, ticked } from '../src/sync.js';
-import { event, pullOf } from '../src/github.js';
+import { event, pullsOf } from '../src/github.js';
 
 const pullRequest = {
   opened,
@@ -12,13 +12,18 @@ const pullRequest = {
   closed,
 };
 
+const dispatched = async (branch) => {
+  if (!branch) throw new Error('underlens: name a branch under "Run workflow PR of branch", or tick "Only check harness availability" — a workflow without those fields predates Underlens 1.0.5: replace it with https://github.com/kkortes/underlens/blob/main/package/templates/underlens.yml');
+  const pulls = await pullsOf(branch);
+  if (!pulls.length) throw new Error(`underlens: ${branch} has no open PR, and Underlens reviews PRs — open one from ${branch} and run again, or tick "Only check harness availability"`);
+  if (pulls.length > 1) throw new Error(`underlens: ${branch} heads ${pulls.map((n) => `#${n}`).join(' and ')} — review one by branch only when it has a single open PR`);
+  return review(pulls[0]);
+};
+
 const ci = {
   schedule: scheduled,
-  workflow_dispatch: async () => {
-    const branch = process.env.GITHUB_REF_NAME;
-    const n = branch !== event.repository.default_branch && (await pullOf(branch));
-    return n ? review(n) : validate();
-  },
+  // The event payload carries a boolean input as the string 'true' or 'false'.
+  workflow_dispatch: () => (event.inputs?.check === 'true' ? validate() : dispatched(event.inputs?.branch)),
   pull_request: () => pullRequest[event.action]?.(event.pull_request.number),
 };
 

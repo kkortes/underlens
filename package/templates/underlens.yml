@@ -6,6 +6,12 @@ on:
   pull_request:
     types: [edited, closed]
   workflow_dispatch:
+    inputs:
+      branch:
+        description: Run workflow PR of branch
+      check:
+        description: Only check harness availability
+        type: boolean
 
 permissions:
   contents: write
