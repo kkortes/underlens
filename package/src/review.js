@@ -51,7 +51,7 @@ const fix = async (pr, point, i, cfg) => {
   const umbrella = umbrellaOf(pr.number);
   const branch = `${umbrella}-rule-${point.rule}-${i + 1}`;
   await $`git reset -q --hard && git clean -qfd && git checkout -q -B ${branch} ${umbrella}`;
-  const change = (await run(cfg.judge, fixPrompt({ pr, rules: cfg.rules, point }), { write: true })).trim();
+  const change = (await run(cfg.judge, fixPrompt({ ...cfg, pr, point }), { write: true })).trim();
   await $`git add -A`;
   if (!(await $`git diff --cached --quiet`.nothrow()).exitCode) return { ...point, fix: null, outcome: 'nofix' };
   await $`git commit -qm ${`Rule ${point.rule}: ${point.title}`} && git push -qf origin ${branch}`;
@@ -92,7 +92,7 @@ const examine = async (pr, cfg) => {
 
   summary(`## #${n} ${pr.title}`);
   // Each reviewer settles on its own: the judge works from whichever answered.
-  const settled = (await Promise.allSettled(cfg.reviewers.map(async (spec) => json(await run(spec, reviewPrompt({ pr, rules: cfg.rules, diff }))).findings))).map(
+  const settled = (await Promise.allSettled(cfg.reviewers.map(async (spec) => json(await run(spec, reviewPrompt({ ...cfg, pr, diff }))).findings))).map(
     (result, i) => ({ spec: cfg.reviewers[i], ...result }),
   );
   const reports = Object.fromEntries(settled.filter((r) => r.status === 'fulfilled').map(({ spec, value }) => [spec, value]));
@@ -101,8 +101,14 @@ const examine = async (pr, cfg) => {
   failed.forEach(({ spec, reason }) => summary(`${label(spec)} failed: ${reason}`));
   if (failed.length === settled.length) throw new Error(`every reviewer failed, nothing was judged: ${failed.map(({ spec, reason }) => `${spec} (${reason})`).join('; ')}`);
 
-  // The judge's `fix` is kept as `proposal`: a written fix's PR number takes `fix`.
-  const judged = json(await run(cfg.judge, judgePrompt({ pr, rules: cfg.rules, diff, reports }))).points.map(({ fix, ...point }) => ({ ...point, proposal: fix }));
+  // The judge's `fix` is kept as `proposal`: a written fix's PR number takes
+  // `fix`. Its rule's headline comes from the document, and only a number
+  // citing no rule falls back to the judge's title.
+  const judged = json(await run(cfg.judge, judgePrompt({ ...cfg, pr, diff, reports }))).points.map(({ fix, ...point }) => ({
+    ...point,
+    statement: cfg.rules[point.rule - 1]?.headline ?? point.title,
+    proposal: fix,
+  }));
   const { kept: points, held } = triage(judged);
   summary(`Judged by ${names([cfg.judge])}: ${points.length} point${points.length === 1 ? '' : 's'}${held ? `, ${held} more already in the codebase held back` : ''}`);
 
@@ -116,6 +122,7 @@ const examine = async (pr, cfg) => {
   if (points.length) await $`git push -qf origin ${umbrellaOf(n)}`;
   for (const [i, point] of points.entries()) data.points.push(await fix(pr, point, i, cfg));
 
+  data.finished = new Date().toISOString();
   await setBody(n, write((await pull(n)).body, report(pr, data), data));
   return failed;
 };

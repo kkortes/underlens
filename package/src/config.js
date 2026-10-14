@@ -19,11 +19,38 @@ const load = async () => {
   // it says.
   if ('when' in config) throw new Error('underlens.config.js: `when` is gone — remove it and pick triggers in .github/workflows/underlens.yml: https://underlens.korte.kim/#setup');
   if ('models' in config) throw new Error("underlens.config.js: `models` is gone — name the model in the reviewer or judge string itself, like 'claude-opus-5-5': https://underlens.korte.kim/#models");
+  const document = await Bun.file(quality).text();
+  const rules = parse(document);
+  if (!rules.length) throw new Error(`${quality}: no rules — write each rule as a list item: https://underlens.korte.kim/#setup`);
   return {
     ...config,
     agents: [...new Set([...config.reviewers, config.judge])],
-    rules: await Bun.file(quality).text(),
+    document,
+    rules,
   };
+};
+
+// The document's rules are its top-level list items, numbered top to bottom.
+// Each one's headline is copied from the document, never written by a model:
+// the item's lead sentence when more follow it, else the heading it sits
+// under, else the whole item.
+export const parse = (document) => {
+  const rules = [];
+  let heading, item, fenced;
+  for (const line of document.split('\n')) {
+    if (/^\s*(```|~~~)/.test(line)) fenced = !fenced;
+    const title = line.match(/^#{2,6}\s+(.+?)[\s#]*$/)?.[1];
+    const lead = line.match(/^(?:[-*+]|\d+[.)])\s+(.+)/)?.[1];
+    if (fenced || title || !line.trim()) item = null;
+    if (fenced) continue;
+    if (title) heading = title;
+    else if (lead) rules.push((item = { text: lead, heading }));
+    else if (item) item.text += ` ${line.trim()}`;
+  }
+  return rules.map(({ text, heading }) => {
+    const [first, ...rest] = text.split(/(?<=[.!?])\s+(?=\S)/);
+    return { text, headline: rest.length ? first : (heading ?? text) };
+  });
 };
 
 let loaded;

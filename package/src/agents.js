@@ -30,13 +30,16 @@ export const json = (text) => JSON.parse(text.slice(text.indexOf('{'), text.last
 
 export const ping = (spec) => run(spec, 'Reply with the single word READY and nothing else.', { timeout: minutes(4) });
 
-const context = ({ pr, rules }) => `Pull request #${pr.number} "${pr.title}" in this repository. The working directory is the pull request's head.
+const context = ({ pr, document, rules }) => `Pull request #${pr.number} "${pr.title}" in this repository. The working directory is the pull request's head.
 
-The quality document below is curated by a human and is the only standard this review holds the code to. Its rules are numbered.
+The quality document below is curated by a human and is the only standard this review holds the code to.
 
 <quality-document>
-${rules}
-</quality-document>`;
+${document}
+</quality-document>
+
+Its rules, numbered in the document's order. Refer to a rule by this number and no other:
+${rules.map(({ text }, i) => `${i + 1}. ${text}`).join('\n')}`;
 
 // Drift that was already in the codebase is worked down a few points per
 // review, so the first review of an old codebase doesn't open a fix PR for
@@ -51,7 +54,7 @@ const origins = `- "pr": the pull request introduces it: the code that breaks th
 - "combined": the pull request together with existing code breaks it: the change and code it leaves alone break the rule only together, or the change makes drift that was already there worse.
 - "existing": it was there before the pull request, which doesn't make it worse.`;
 
-export const reviewPrompt = ({ pr, rules, diff }) => `You are an Underlens reviewer. ${context({ pr, rules })}
+export const reviewPrompt = ({ pr, document, rules, diff }) => `You are an Underlens reviewer. ${context({ pr, document, rules })}
 
 ${diffBlock(diff)}
 
@@ -68,7 +71,7 @@ Answer with JSON only, nothing around it:
 {"findings":[{"rule":4,"origin":"pr","file":"src/app.js","line":12,"detail":"what breaks the rule, in one or two sentences","fix":"the concrete change that satisfies the rule"}]}
 An empty findings list is a valid answer.`;
 
-export const judgePrompt = ({ pr, rules, diff, reports }) => `You are the Underlens judge. ${context({ pr, rules })}
+export const judgePrompt = ({ pr, document, rules, diff, reports }) => `You are the Underlens judge. ${context({ pr, document, rules })}
 
 ${diffBlock(diff)}
 
@@ -84,14 +87,13 @@ Consolidate them into points. Do not edit any file.
 - Check every finding against the code yourself. Drop it when the rule it cites doesn't exist or the code doesn't actually break it.
 - Check every point's origin against the diff, and correct it where the reviewers got it wrong or disagree.
 - Title each point after its rule and its place, plainly, so the same drift reads the same on every review.
-- Give each point its rule's statement: the rule's heading or line copied from the quality document exactly as written there, without its number, never a description of this point.
 - Give each point its fix: the concrete change, in one short, direct sentence.
 
 Answer with JSON only, nothing around it:
-{"points":[{"rule":4,"origin":"pr","statement":"No defensive checks.","title":"No defensive checks in src/app.js","file":"src/app.js","line":12,"detail":"one or two sentences","fix":"Drop the null check around user.save().","raisedBy":["claude-opus-5-5","gpt"]}]}
+{"points":[{"rule":4,"origin":"pr","title":"No defensive checks in src/app.js","file":"src/app.js","line":12,"detail":"one or two sentences","fix":"Drop the null check around user.save().","raisedBy":["claude-opus-5-5","gpt"]}]}
 An empty points list is a valid answer.`;
 
-export const fixPrompt = ({ pr, rules, point }) => `You are applying one Underlens fix. ${context({ pr, rules })}
+export const fixPrompt = ({ pr, document, rules, point }) => `You are applying one Underlens fix. ${context({ pr, document, rules })}
 
 <point>
 ${JSON.stringify(point, null, 2)}

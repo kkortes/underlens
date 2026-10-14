@@ -59,7 +59,7 @@ review unshallows it before it diffs.
   event. The workflow's triggers alone decide when reviews run, and each
   `reviewers` / `judge` string alone picks harness and model; a config that
   still sets `when` or `models` throws, and so does a string whose prefix
-  names no harness.
+  names no harness, and so does a quality document without a list item.
 - Reviewer / judge strings: a bare harness id (`'claude'`) runs its CLI's
   default model; `<id>-…` (`'claude-opus-5-5'`, `'gpt-6.1-sol'`,
   `'glm-5.3-flash'`) passes through whole as the model flag, since every
@@ -92,10 +92,14 @@ review unshallows it before it diffs.
   the files the diff touches, so a prompt grows with the diff and the rules,
   never the repo. `backlog` (10) caps `existing` findings per reviewer and
   `existing` points per review, so an old codebase is worked down a few fixes
-  at a time. The judge quotes each point's rule as `statement`, copied from
-  the document, and proposes its fix in one sentence (`fix`, kept as
-  `proposal`, since a written fix's PR number takes `fix`); the fix agent
-  answers with a plain account of its change.
+  at a time. Every prompt carries the document and its rules as numbered by
+  `parse` in [config.js](package/src/config.js): the top-level list items, top
+  to bottom, each with a headline copied from the document (the item's lead
+  sentence when more follow, else its `##` heading, else the item). The judge
+  proposes each point's fix in one sentence (`fix`, kept as `proposal`, since
+  a written fix's PR number takes `fix`) and writes no headline: review.js
+  stores the rule's as `statement`, the judge's `title` only for a number
+  citing no rule. The fix agent answers with a plain account of its change.
 - [review.js](package/src/review.js) — opened, scheduled, review. A review
   checks out the PR head as `underlens-pr-N`, runs reviewers in parallel and
   each settles on its own, then the judge on whichever answered. Only then
@@ -113,13 +117,14 @@ review unshallows it before it diffs.
   `<!-- underlens -->` markers; its state rides in a base64 comment. A section
   with state means reviewed: the scheduled run skips it, and its headline reads
   "This PR was reviewed through Underlens", linked to the site. Each point is
-  one entry, sorted by rule number, the quality document's order: the
-  `statement` in bold (the judge's title in state from before it), marked
-  "Already in the codebase before this PR" for `existing` drift and unmarked
-  otherwise, then `Proposed fix:` linking the fix PR by number and title,
-  then the one-line `proposal` (`change`, then `detail`, in older state), then
-  the Agree / Disagree boxes or the outcome. Above the list, a "Drifts from
-  … & proposed fixes" h3 explains agree / disagree and links the umbrella PR.
+  one entry, sorted by rule number, the quality document's order: a `---`
+  divider, the `statement` in bold (the judge's title in state from before
+  it), marked "Already in the codebase before this PR" for `existing` drift
+  and unmarked otherwise, the one-line `proposal` (`change`, then `detail`, in
+  older state), `**Proposed fix:**` with the fix PR's link by number and title
+  on the next line, then the Agree / Disagree boxes or the outcome. Above the
+  list, a "Report from Quality control" h3 and one line on agree / disagree;
+  the reviewed line carries `finished`, when the run ended, in UTC.
   Held-back points are counted under the list. The fix PR's `description`
   holds the long account: the same headline, file and line, the judge's
   `detail` and what the fix agent says it changed.
