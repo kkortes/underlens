@@ -4,6 +4,8 @@ import harnesses, { agent, label } from './harnesses.js';
 
 const ids = Object.keys(harnesses);
 
+export const quality = 'underlens-quality-control.md';
+
 // Read from the workflow's own checkout, before any pull request is checked
 // out, so a pull request can't rewrite the rules it's reviewed by.
 const load = async () => {
@@ -20,7 +22,7 @@ const load = async () => {
   return {
     ...config,
     agents: [...new Set([...config.reviewers, config.judge])],
-    rules: await Bun.file('underlens-quality-control.md').text(),
+    rules: await Bun.file(quality).text(),
   };
 };
 

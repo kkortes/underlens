@@ -211,7 +211,7 @@ mock-body {
   padding: calc(var(--unit) * 4);
 }
 
-mock-body :is(p, ol, h4) {
+mock-body :is(p, ol, h4, h5) {
   margin: 0;
 }
 

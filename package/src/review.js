@@ -4,7 +4,7 @@ import config, { names } from './config.js';
 import { label } from './harnesses.js';
 import { backlog, fixPrompt, judgePrompt, json, reviewPrompt, run } from './agents.js';
 import { close, deleteBranch, openPull, openPulls, pull, pullsAllowed, pullsForbidden, runUrl, setBody, summary } from './github.js';
-import { announcement, block, failure, report, state, write, writing } from './section.js';
+import { announcement, description, failure, fixTitle, report, state, write, writing } from './section.js';
 
 // Flat names: a slash would collide with a branch named plain `underlens`,
 // since git can't hold both `underlens` and `underlens/…`.
@@ -59,8 +59,8 @@ const fix = async (pr, point, i, cfg) => {
   const number = await openPull({
     base: umbrella,
     head: branch,
-    title: `Underlens · ${point.title}`,
-    body: `${block(fixed)}\n\nAgree or disagree in #${pr.number}'s Underlens section — merging or closing this PR does the same.`,
+    title: fixTitle(point),
+    body: description(fixed, pr),
   });
   return { ...fixed, fix: number, outcome: 'open' };
 };
@@ -101,7 +101,9 @@ const examine = async (pr, cfg) => {
   failed.forEach(({ spec, reason }) => summary(`${label(spec)} failed: ${reason}`));
   if (failed.length === settled.length) throw new Error(`every reviewer failed, nothing was judged: ${failed.map(({ spec, reason }) => `${spec} (${reason})`).join('; ')}`);
 
-  const { kept: points, held } = triage(json(await run(cfg.judge, judgePrompt({ pr, rules: cfg.rules, diff, reports }))).points);
+  // The judge's `fix` is kept as `proposal`: a written fix's PR number takes `fix`.
+  const judged = json(await run(cfg.judge, judgePrompt({ pr, rules: cfg.rules, diff, reports }))).points.map(({ fix, ...point }) => ({ ...point, proposal: fix }));
+  const { kept: points, held } = triage(judged);
   summary(`Judged by ${names([cfg.judge])}: ${points.length} point${points.length === 1 ? '' : 's'}${held ? `, ${held} more already in the codebase held back` : ''}`);
 
   // Only now is there a review to replace the last one with: a run that fails

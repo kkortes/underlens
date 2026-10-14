@@ -122,9 +122,10 @@
       <step-no>6</step-no>
       <h3>The PR's section becomes the report</h3>
       <p>
-        The section in the original PR is replaced with a short status report: one block per point, naming the rule it
-        breaks, whether the drift came from this PR or was already in the codebase, what its fix changed and a link to
-        it. Each block has an Agree box and a Disagree box. Once
+        The section in the original PR is replaced with a short status report, in the order the quality document
+        lists its rules: one block per point, headed by the rule exactly as the document words it, then a link to its
+        fix PR and what the fix proposes in a line. Drift that was already in the codebase is marked as such; the fix
+        PR's own description explains the rest. Each block has an Agree box and a Disagree box. Once
         reported, the PR isn't reviewed again unless you run the workflow for its branch.
       </p>
     </step-text>
@@ -134,25 +135,31 @@
         <mock-section>
           <h4>This PR was reviewed through <u>Underlens</u></h4>
           <p muted>Reviewed <code>9f3c2e1</code> with Claude and GPT, judged by Claude</p>
+          <h5>Drifts from <u>underlens-quality-control.md</u> &amp; proposed fixes</h5>
+          <p muted>
+            For each of these proposals you can either <b>agreed</b> (merges PR) or <b>disagreed</b> (closes PR) with the
+            proposed changes.
+          </p>
+          <p muted>
+            All agreed changes are merged to a single PR, <u>#46 Underlens fixes for #42</u>, which you can decide to
+            merge as a whole if you want.
+          </p>
           <mock-point>
-            <b>Rule 3: No <code>try</code>/<code>catch</code> that swallows an error.</b>
-            <i muted>Introduced by this PR.</i>
-            <span>The catch in <code>charge</code> now rethrows, so a failed charge surfaces instead of reading as no charge.</span>
-            <span>Fix: <u>#43</u></span>
-            <b ok>Agreed</b>
-          </mock-point>
-          <mock-point>
-            <b>Rule 1: No <code>console.log</code> in committed code.</b>
-            <i muted>Already in the codebase before this PR.</i>
-            <span>Removed the debug log from the cart total.</span>
-            <span>Fix: <u>#44</u></span>
+            <span><b>No <code>console.log</code> in committed code.</b> · <i muted>Already in the codebase before this PR</i></span>
+            <span>Proposed fix: <u>#44 Underlens · console.log in cart.js</u></span>
+            <span>Remove the debug log from the cart total.</span>
             <mock-ticks><label><input type="checkbox" disabled /> Agree</label><label><input type="checkbox" disabled /> Disagree</label></mock-ticks>
           </mock-point>
           <mock-point>
-            <b>Rule 4: No dependency for what a few lines would do.</b>
-            <i muted>Introduced by this PR.</i>
-            <span>Dropped <code>left-pad</code> for a <code>padStart</code> call at its one use.</span>
-            <span>Fix: <u>#45</u></span>
+            <b>No <code>try</code>/<code>catch</code> that swallows an error: a caught error is handled, rethrown or reported.</b>
+            <span>Proposed fix: <u>#43 Underlens · Swallowed error in api.js</u></span>
+            <span>Rethrow the error the catch in <code>charge</code> swallows.</span>
+            <b ok>Agreed</b>
+          </mock-point>
+          <mock-point>
+            <b>No dependency is added for something a few lines of code would do.</b>
+            <span>Proposed fix: <u>#45 Underlens · left-pad in package.json</u></span>
+            <span>Replace <code>left-pad</code> with <code>padStart</code> at its one use.</span>
             <b muted>Disagreed</b>
           </mock-point>
         </mock-section>
@@ -173,7 +180,7 @@
     <choice-cards>
       <choice-card>
         <h4>Agree</h4>
-        <p>The fix merges into <code>underlens-pr-42</code>, which comes back to your PR as one PR of its own.</p>
+        <p>The fix merges into <code>underlens-pr-42</code>, and every agreed fix comes back to your PR as one PR you can merge whole.</p>
       </choice-card>
       <choice-card>
         <h4>Disagree</h4>

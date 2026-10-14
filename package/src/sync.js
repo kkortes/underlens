@@ -1,5 +1,5 @@
 import { close, merge, openPull, pull, setBody } from './github.js';
-import { report, state, ticks, write } from './section.js';
+import { report, state, ticks, umbrellaTitle, write } from './section.js';
 import { own, retire } from './review.js';
 
 // The umbrella PR can only open once a fix is in it: GitHub refuses a PR
@@ -9,7 +9,7 @@ const settle = async (pr, data) => {
     data.umbrella.pr = await openPull({
       base: pr.headRefName,
       head: data.umbrella.branch,
-      title: `Underlens fixes for #${pr.number}`,
+      title: umbrellaTitle(pr),
       body: `The fixes agreed on in #${pr.number}'s Underlens section. Merge this to take them into #${pr.number}.`,
     });
   await setBody(pr.number, write(pr.body, report(pr, data), data));

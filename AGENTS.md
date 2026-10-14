@@ -92,7 +92,9 @@ review unshallows it before it diffs.
   the files the diff touches, so a prompt grows with the diff and the rules,
   never the repo. `backlog` (10) caps `existing` findings per reviewer and
   `existing` points per review, so an old codebase is worked down a few fixes
-  at a time. The judge quotes each point's rule as `statement`; the fix agent
+  at a time. The judge quotes each point's rule as `statement`, copied from
+  the document, and proposes its fix in one sentence (`fix`, kept as
+  `proposal`, since a written fix's PR number takes `fix`); the fix agent
   answers with a plain account of its change.
 - [review.js](package/src/review.js) — opened, scheduled, review. A review
   checks out the PR head as `underlens-pr-N`, runs reviewers in parallel and
@@ -111,12 +113,16 @@ review unshallows it before it diffs.
   `<!-- underlens -->` markers; its state rides in a base64 comment. A section
   with state means reviewed: the scheduled run skips it, and its headline reads
   "This PR was reviewed through Underlens", linked to the site. Each point is
-  one `block`: **Rule N: <statement>**, the rule's own wording as the judge
-  quotes it, then its origin in a line of italics (state from before origins
-  reads as the PR's), then `change`, what the fix agent says it changed (the
-  judge's `detail` when no fix was written). Held-back points are counted
-  under the list. The section adds `Fix: [#N](…)` and the
-  Agree / Disagree boxes; the fix PR's description is the same block.
+  one entry, sorted by rule number, the quality document's order: the
+  `statement` in bold (the judge's title in state from before it), marked
+  "Already in the codebase before this PR" for `existing` drift and unmarked
+  otherwise, then `Proposed fix:` linking the fix PR by number and title,
+  then the one-line `proposal` (`change`, then `detail`, in older state), then
+  the Agree / Disagree boxes or the outcome. Above the list, a "Drifts from
+  … & proposed fixes" h3 explains agree / disagree and links the umbrella PR.
+  Held-back points are counted under the list. The fix PR's `description`
+  holds the long account: the same headline, file and line, the judge's
+  `detail` and what the fix agent says it changed.
 - [sync.js](package/src/sync.js) — `edited` acts on ticked
   `- [x] Agree <!-- fix -->` boxes; `closed` maps a fix merged or closed by
   hand onto Agree / Disagree and retires everything when the original closes.
