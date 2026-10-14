@@ -1,5 +1,5 @@
 import { backlog } from './agents.js';
-import { names } from './config.js';
+import { names, quality } from './config.js';
 import { label } from './harnesses.js';
 import { repo, runUrl } from './github.js';
 
@@ -25,21 +25,28 @@ export const write = (body, content, data) =>
 export const ticks = (body) =>
   Object.fromEntries([...(body ?? '').matchAll(/- \[[xX]\] (Agree|Disagree) <!-- (\d+) -->/g)].reverse().map(([, choice, fix]) => [fix, choice]));
 
-const rulesLink = (pr) => `[\`underlens-quality-control.md\`](${process.env.GITHUB_SERVER_URL}/${repo}/blob/${pr.baseRefName}/underlens-quality-control.md)`;
+const rulesLink = (pr) => `[\`${quality}\`](${process.env.GITHUB_SERVER_URL}/${repo}/blob/${pr.baseRefName}/${quality})`;
 const team = (config) => `with ${names(config.reviewers)}, judged by ${names([config.judge])}`;
 
 export const announcement = (pr, config) => `Underlens is reviewing this PR now ${team(config)}, against ${rulesLink(pr)}. [Follow the run](${runUrl}).`;
 
-const origins = {
-  pr: 'Introduced by this PR.',
-  combined: 'This PR together with existing code.',
-  existing: 'Already in the codebase before this PR.',
-};
+// The rule as the quality document words it. Only drift that predates the PR
+// is marked: the PR's own, alone or together with code it leaves alone, is
+// what a review of it is about. State written before the judge quoted rules
+// carries only its title, and state from diff-only reviews no origin.
+const headline = (point) => `**${point.statement ?? point.title}**${point.origin === 'existing' ? ' · *Already in the codebase before this PR*' : ''}`;
 
-// The rule in its own words, where the drift comes from, then what the fix
-// changed. State written before fixes explained themselves carries only the
-// judge's title and detail, and state from diff-only reviews no origin.
-export const block = (point) => `**Rule ${point.rule}: ${point.statement ?? point.title}**\n*${origins[point.origin ?? 'pr']}*\n${point.change ?? point.detail}`;
+export const fixTitle = (point) => `Underlens · ${point.title}`;
+export const umbrellaTitle = (pr) => `Underlens fixes for #${pr.number}`;
+
+// Explicit links: GitHub expands a bare #N into the PR's title without a way
+// to tell it apart from the text around it.
+const pullLink = (title, n) => `[#${n} ${title}](${process.env.GITHUB_SERVER_URL}/${repo}/pull/${n})`;
+
+// The fix PR carries the long account: where the rule breaks, why, and what
+// the fix changed. The section keeps the judge's one-line proposal.
+export const description = (point, pr) =>
+  `${headline(point)}\n\nIn \`${point.file}${point.line ? `:${point.line}` : ''}\`: ${point.detail}\n\n${point.change}\n\nAgree or disagree in #${pr.number}'s Underlens section — merging or closing this PR does the same.`;
 
 const outcome = (point, data) =>
   ({
@@ -47,11 +54,20 @@ const outcome = (point, data) =>
     agreed: `**Agreed**, merged into ${data.umbrella.pr ? `#${data.umbrella.pr}` : `\`${data.umbrella.branch}\``}.`,
     disagreed: '**Disagreed**, fix closed. It comes back next review while its rule stands.',
     conflict: `**Agreed**, but it conflicts with a fix merged before it: resolve #${point.fix} by hand.`,
-    nofix: 'No fix written; this one needs a person.',
   })[point.outcome];
 
-// An explicit link: GitHub expands a bare #N into the fix PR's whole title.
-const fixLink = (point) => (point.fix ? `\nFix: [#${point.fix}](${process.env.GITHUB_SERVER_URL}/${repo}/pull/${point.fix})` : '');
+// State written before proposals were kept carries what the fix changed, or
+// the judge's detail where no fix was written.
+const entry = (point, data) =>
+  [
+    `${headline(point)}\nProposed fix: ${point.fix ? pullLink(fixTitle(point), point.fix) : 'none written, this one needs a person.'}\n${point.proposal ?? point.change ?? point.detail}`,
+    outcome(point, data),
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+
+const proposals = (pr, data) =>
+  `### Drifts from ${rulesLink(pr)} & proposed fixes\n\nFor each of these proposals you can either **agreed** (merges PR) or **disagreed** (closes PR) with the proposed changes.\n\nAll agreed changes are merged to a single PR, ${data.umbrella.pr ? pullLink(umbrellaTitle(pr), data.umbrella.pr) : `${umbrellaTitle(pr)} (it opens with the first agreed fix)`}, which you can decide to merge as a whole if you want.`;
 
 // Written without state, so the PR still counts as unreviewed.
 export const failure = (pr, reason) =>
@@ -69,6 +85,7 @@ export const report = (pr, data) => {
   const { points } = data;
   const head = reviewed(pr, data);
   if (!points.length) return `${head}\n\nIt was judged that **nothing** in this PR and/or codebase is drifting from the quality control document.`;
-  const list = points.map((point) => `${block(point)}${fixLink(point)}\n\n${outcome(point, data)}`).join('\n\n');
-  return `${head}\n\n**Agree** merges a point's fix into \`${data.umbrella.branch}\`, which comes back to this PR as one PR of its own. **Disagree** closes the fix — the point returns on the next review for as long as its rule stands, so settle it for good by changing the quality document instead.\n\n${list}${data.held ? `\n\n${data.held} more point${data.held === 1 ? '' : 's'} already in the codebase ${data.held === 1 ? 'is' : 'are'} held back: a review takes on at most ${backlog} of those at a time.` : ''}`;
+  // In the quality document's order, which numbers its rules top to bottom.
+  const list = points.toSorted((a, b) => a.rule - b.rule).map((point) => entry(point, data)).join('\n\n');
+  return `${head}\n\n${proposals(pr, data)}\n\n${list}${data.held ? `\n\n${data.held} more point${data.held === 1 ? '' : 's'} already in the codebase ${data.held === 1 ? 'is' : 'are'} held back: a review takes on at most ${backlog} of those at a time.` : ''}`;
 };

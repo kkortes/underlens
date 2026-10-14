@@ -84,10 +84,11 @@ Consolidate them into points. Do not edit any file.
 - Check every finding against the code yourself. Drop it when the rule it cites doesn't exist or the code doesn't actually break it.
 - Check every point's origin against the diff, and correct it where the reviewers got it wrong or disagree.
 - Title each point after its rule and its place, plainly, so the same drift reads the same on every review.
-- Give each point its rule's statement: the rule's own wording from the quality document, its heading or its line as written there, not a description of this point.
+- Give each point its rule's statement: the rule's heading or line copied from the quality document exactly as written there, without its number, never a description of this point.
+- Give each point its fix: the concrete change, in one short, direct sentence.
 
 Answer with JSON only, nothing around it:
-{"points":[{"rule":4,"origin":"pr","statement":"No defensive checks.","title":"No defensive checks in src/app.js","file":"src/app.js","line":12,"detail":"one or two sentences","fix":"the concrete change","raisedBy":["claude-opus-5-5","gpt"]}]}
+{"points":[{"rule":4,"origin":"pr","statement":"No defensive checks.","title":"No defensive checks in src/app.js","file":"src/app.js","line":12,"detail":"one or two sentences","fix":"Drop the null check around user.save().","raisedBy":["claude-opus-5-5","gpt"]}]}
 An empty points list is a valid answer.`;
 
 export const fixPrompt = ({ pr, rules, point }) => `You are applying one Underlens fix. ${context({ pr, rules })}
@@ -96,4 +97,4 @@ export const fixPrompt = ({ pr, rules, point }) => `You are applying one Underle
 ${JSON.stringify(point, null, 2)}
 </point>
 
-Make the smallest change that brings the code in line with rule ${point.rule} for this point, and nothing else: no other rule, no unrelated cleanup, no new files unless the fix needs one. Don't commit — Underlens commits what you change. When done, answer with what you changed and how that satisfies the rule, in one to three plain sentences for someone who hasn't opened the diff: no preamble, no markdown, nothing else.`;
+Make the smallest change that brings the code in line with rule ${point.rule} for this point, and nothing else: no other rule, no unrelated cleanup, no new files unless the fix needs one. Don't commit — Underlens commits what you change. When done, answer with what you changed, where, and how that satisfies the rule, in a short paragraph for someone who hasn't opened the diff: no preamble, no markdown, nothing else.`;
