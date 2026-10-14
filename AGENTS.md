@@ -39,12 +39,14 @@ checks out, sets up bun and runs the package with `GH_TOKEN`. Those three can't
 move: a called workflow can't widen its caller's token, and `secrets: inherit`
 stops at the owner. Move the floating `v1` tag when run.yml changes.
 [bin/underlens.js](package/bin/underlens.js) dispatches on `GITHUB_EVENT_NAME`
-(or `init` / `validate` by name) and reads a dispatch's `pr` input from the
-event payload; a review unshallows the checkout before it diffs.
+(or `init` / `validate` by name). A dispatch with an empty `branch` input
+validates; otherwise it reviews the open PR whose head is that branch, and
+fails with a message when the branch heads no open PR, or more than one. run.yml checks out the default branch on every event; a
+review unshallows it before it diffs.
 
 - [config.js](package/src/config.js) — loads `underlens.config.js` and the
-  quality document from the workflow's checkout (default branch on schedule and
-  dispatch). The workflow's triggers alone decide when reviews run, and each
+  quality document from the workflow's checkout, the default branch on every
+  event. The workflow's triggers alone decide when reviews run, and each
   `reviewers` / `judge` string alone picks harness and model; a config that
   still sets `when` or `models` throws, and so does a string whose prefix
   names no harness.
@@ -62,7 +64,8 @@ event payload; a review unshallows the checkout before it diffs.
   and Grok 1.0.50: Grok's `dontAsk` cancels the turn on any denied tool, so it
   gets an explicit `--tools` list, and its plain output stops at the first
   message, so it runs with `--output-format json`.
-- [validate.js](package/src/validate.js) — dispatch without a PR number: one
+- [validate.js](package/src/validate.js) — dispatch with the `branch` input left empty:
+  one
   row per configured string, each pinged on that exact harness and model, and
   whether Actions may open PRs. Every review asks that too before it starts
   (`pullsAllowed` in [github.js](package/src/github.js)): the token can't read

@@ -7,8 +7,8 @@ on:
     types: [edited, closed]
   workflow_dispatch:
     inputs:
-      pr:
-        description: PR to review now. Leave empty to check every harness signs in.
+      branch:
+        description: Run workflow PR of branch (leave empty for harness check)
 
 permissions:
   contents: write

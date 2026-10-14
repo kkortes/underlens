@@ -8,6 +8,7 @@ export const runUrl = `${process.env.GITHUB_SERVER_URL}/${repo}/actions/runs/${p
 const fields = 'number,state,title,body,url,headRefName,headRefOid,baseRefName,isDraft,isCrossRepository';
 
 export const pull = (n) => $`gh pr view ${n} --json ${fields}`.json();
+export const pullsOf = async (branch) => (await $`gh pr list --state open --head ${branch} --json number,isCrossRepository`.json()).filter((pr) => !pr.isCrossRepository).map((pr) => pr.number);
 export const openPulls = () => $`gh pr list --state open --limit 200 --json ${fields}`.json();
 export const setBody = (n, body) => $`gh api -X PATCH repos/${repo}/pulls/${n} -f body=${body}`.quiet();
 
