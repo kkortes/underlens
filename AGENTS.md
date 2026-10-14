@@ -14,8 +14,18 @@ the action itself.
   serves `/` from `pages/index.html` and `/templates/*` from `package/templates/`.
 - `bun run build` — `vibe compile` in SPA mode to `compiled/`, then copies
   `package/templates` to `compiled/templates` (what Vercel runs).
-- `cd package && npm publish` — publishes the package. Only on the developer's
-  word.
+- `cd package && npm publish` — publishes the package. The developer's to run,
+  never an agent's.
+
+## Contributing and versioning
+
+- Every branch made for underlens includes a version bump. It is a patch bump
+  (`1.0.5` → `1.0.6`) unless the developer names a minor or a major, and then
+  it is that one.
+- The version lives in `package/package.json`. The root `package.json` is the
+  private site and keeps its own.
+- Publishing is done by hand by the developer once the branch is merged to
+  `main`. An agent never publishes.
 
 ## Site
 
