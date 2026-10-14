@@ -1,6 +1,6 @@
 {
   "name": "@ape-egg/underlens",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Nightly code review against a human-curated quality document, on your own harness subscriptions — run from a GitHub workflow.",
   "type": "module",
   "bin": {
