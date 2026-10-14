@@ -1,6 +1,6 @@
 # @ape-egg/underlens
 
-Nightly code review held to rules you wrote, run from a GitHub workflow on your own AI subscriptions. Guide: [underlens.korte.kim](https://underlens.korte.kim).
+Scheduled code review held to rules you wrote, run from a GitHub workflow on your own AI subscriptions. Guide: [underlens.korte.kim](https://underlens.korte.kim).
 
 The workflow's triggers decide when a PR is reviewed. Then one reviewer per configured harness holds the whole codebase at the PR's head to `underlens-quality-control.md` and reports every place that breaks a numbered rule. The PR's diff tells it where each one comes from: introduced by the PR, caused by the PR together with existing code, or already in the codebase. A judge checks every finding against the code, folds the reports into points and writes one fix PR per point, into an umbrella branch cut from the PR. The PR's section becomes a status report: per point, the rule in its own words, where the drift comes from, what the fix changed and a link to it, with **Agree** (merge the fix) and **Disagree** (close it). Each fix PR's description opens with the same rule and change. A disagreed point returns on every review while its rule stands; only changing the code or the rule settles it.
 
@@ -21,7 +21,7 @@ gh workflow run underlens.yml     # checks every configured harness signs in
 
 - `underlens.config.js`: `reviewers` and `judge`, one string each naming harness and model.
 - `underlens-quality-control.md`: the numbered, human-curated rules.
-- `.github/workflows/underlens.yml`: triggers, permissions, and one job that calls [`kkortes/underlens/.github/workflows/run.yml@v1`](https://github.com/kkortes/underlens/blob/main/.github/workflows/run.yml) with the harness secrets. The triggers you list pick when reviews run.
+- `.github/workflows/underlens.yml`: triggers, permissions, and one job that calls [`kkortes/underlens/.github/workflows/run.yml@v1`](https://github.com/kkortes/underlens/blob/main/.github/workflows/run.yml) with the harness secrets. The triggers you list pick when reviews run; the `cron` line is one example schedule, so set the hours your project wants.
 
 ```yaml
 name: Underlens
@@ -43,6 +43,8 @@ permissions:
 jobs:
   Underlens:
     uses: kkortes/underlens/.github/workflows/run.yml@v1
+    with:
+      runs-on: ubuntu-26.04
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
       CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
@@ -51,7 +53,7 @@ jobs:
       XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
 ```
 
-The check reads **Underlens / Quality control**. `runs-on` is the only input, and it defaults to `ubuntu-26.04`.
+The check reads **Underlens / Quality control**. `runs-on` is the only input, under `with:`; it defaults to `ubuntu-26.04`, so change the label or drop the block.
 
 Three parts of that file stay in your repo because GitHub won't let them move: the triggers, the `permissions` (a called workflow can't widen its caller's token, and a new repo's token is read-only), and the `secrets` (`secrets: inherit` only reaches workflows of the same owner). Forward only the secrets of the harnesses you use, if you like; validate names any that's missing.
 

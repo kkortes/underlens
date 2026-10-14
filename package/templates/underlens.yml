@@ -17,6 +17,8 @@ permissions:
 jobs:
   Underlens:
     uses: kkortes/underlens/.github/workflows/run.yml@v1
+    with:
+      runs-on: ubuntu-26.04
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
       CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}

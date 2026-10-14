@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Underlens is nightly review of the codebase at each PR's head, held to a
+Underlens is scheduled review of the codebase at each PR's head, held to a
 human-curated quality document, run on the developer's own harness
 subscriptions from a GitHub workflow. This folder holds two things: the presentational site
 (https://underlens.korte.kim), which only explains how it works and how to add
