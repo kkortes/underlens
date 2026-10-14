@@ -49,7 +49,7 @@ jobs:
       XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
 ```
 
-The check reads **Underlens / Review and fix**. `runs-on` is the only input, and it defaults to `ubuntu-26.04`.
+The check reads **Underlens / Quality control**. `runs-on` is the only input, and it defaults to `ubuntu-26.04`.
 
 Three parts of that file stay in your repo because GitHub won't let them move: the triggers, the `permissions` (a called workflow can't widen its caller's token, and a new repo's token is read-only), and the `secrets` (`secrets: inherit` only reaches workflows of the same owner). Forward only the secrets of the harnesses you use, if you like; validate names any that's missing.
 
