@@ -49,7 +49,7 @@ gh secret set CODEX_AUTH_JSON &lt; ~/.codex/auth.json</codie>
       Codex refreshes its token when it's 8 days old or gets rejected. A GitHub-hosted runner starts from the secret
       on every run and can't save the refreshed token back, so expect to run <code>codex login</code> and set the
       secret again about once a week. The validate run warns when that's due. On a self-hosted runner (change
-      <code>runs-on</code> in the workflow), Codex keeps the token in <code>~/.codex</code> between runs and stays signed in.
+      <code>runs-on</code> under <code>with:</code> in the workflow), Codex keeps the token in <code>~/.codex</code> between runs and stays signed in.
     </p>
   </harness-card>
 
@@ -65,7 +65,7 @@ gh secret set CODEX_AUTH_JSON &lt; ~/.codex/auth.json</codie>
     <codie dark>gh secret set GLM_API_KEY</codie>
     <p fine>
       Paste the Coding Plan key from your Z.ai account. Z.ai's terms keep the plan to supported tools, and they neither
-      allow nor forbid running those tools in CI. A nightly review is light use, but Z.ai can still flag heavy automated
+      allow nor forbid running those tools in CI. A scheduled review is light use, but Z.ai can still flag heavy automated
       use.
     </p>
   </harness-card>
