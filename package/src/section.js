@@ -30,10 +30,11 @@ const team = (config) => `with ${names(config.reviewers)}, judged by ${names([co
 
 export const announcement = (pr, config) => `Underlens is reviewing this PR now ${team(config)}, against ${rulesLink(pr)}. [Follow the run](${runUrl}).`;
 
-// The rule as the quality document words it. Only drift that predates the PR
-// is marked: the PR's own, alone or together with code it leaves alone, is
-// what a review of it is about. State written before the judge quoted rules
-// carries only its title, and state from diff-only reviews no origin.
+// The rule's headline, copied from the quality document when the review was
+// judged. Only drift that predates the PR is marked: the PR's own, alone or
+// together with code it leaves alone, is what a review of it is about. State
+// written before rules were quoted carries only the judge's title, and state
+// from diff-only reviews no origin.
 const headline = (point) => `**${point.statement ?? point.title}**${point.origin === 'existing' ? ' · *Already in the codebase before this PR*' : ''}`;
 
 export const fixTitle = (point) => `Underlens · ${point.title}`;
@@ -56,18 +57,22 @@ const outcome = (point, data) =>
     conflict: `**Agreed**, but it conflicts with a fix merged before it: resolve #${point.fix} by hand.`,
   })[point.outcome];
 
-// State written before proposals were kept carries what the fix changed, or
-// the judge's detail where no fix was written.
+// Each point is ruled off above, then its headline, the judge's one-line
+// proposal and the fix PR to agree or disagree with. State written before
+// proposals were kept carries what the fix changed, or the judge's detail
+// where no fix was written.
 const entry = (point, data) =>
   [
-    `${headline(point)}\nProposed fix: ${point.fix ? pullLink(fixTitle(point), point.fix) : 'none written, this one needs a person.'}\n${point.proposal ?? point.change ?? point.detail}`,
+    '---',
+    headline(point),
+    point.proposal ?? point.change ?? point.detail,
+    `**Proposed fix:**\n${point.fix ? pullLink(fixTitle(point), point.fix) : 'none written, this one needs a person.'}`,
     outcome(point, data),
   ]
     .filter(Boolean)
     .join('\n\n');
 
-const proposals = (pr, data) =>
-  `### Drifts from ${rulesLink(pr)} & proposed fixes\n\nFor each of these proposals you can either **agreed** (merges PR) or **disagreed** (closes PR) with the proposed changes.\n\nAll agreed changes are merged to a single PR, ${data.umbrella.pr ? pullLink(umbrellaTitle(pr), data.umbrella.pr) : `${umbrellaTitle(pr)} (it opens with the first agreed fix)`}, which you can decide to merge as a whole if you want.`;
+const intro = '### Report from Quality control\n\nFor each proposal underneath you can either *agree* (merges PR) or *disagree* (closes PR).';
 
 // Written without state, so the PR still counts as unreviewed.
 export const failure = (pr, reason) =>
@@ -75,7 +80,11 @@ export const failure = (pr, reason) =>
 
 const failures = (data) => (data.failed ?? []).map(({ spec, reason }) => `\n- ${label(spec)} failed: ${reason}`).join('');
 
-const reviewed = (pr, data) => `Reviewed \`${data.sha.slice(0, 7)}\` ${team(data)}, against ${rulesLink(pr)} · [run](${data.run})${failures(data)}`;
+// When the run finished, in UTC: a PR description can't show the reader's
+// own time zone. A review still writing its fixes, or one from before, has none.
+const finished = (data) => (data.finished ? ` finished ${data.finished.slice(0, 16).replace('T', ' ')} UTC` : '');
+
+const reviewed = (pr, data) => `Reviewed \`${data.sha.slice(0, 7)}\` ${team(data)}, against ${rulesLink(pr)} · [run](${data.run})${finished(data)}${failures(data)}`;
 
 // Written without state: its fixes aren't open yet, so there's nothing to tick.
 export const writing = (pr, data, count) =>
@@ -87,5 +96,5 @@ export const report = (pr, data) => {
   if (!points.length) return `${head}\n\nIt was judged that **nothing** in this PR and/or codebase is drifting from the quality control document.`;
   // In the quality document's order, which numbers its rules top to bottom.
   const list = points.toSorted((a, b) => a.rule - b.rule).map((point) => entry(point, data)).join('\n\n');
-  return `${head}\n\n${proposals(pr, data)}\n\n${list}${data.held ? `\n\n${data.held} more point${data.held === 1 ? '' : 's'} already in the codebase ${data.held === 1 ? 'is' : 'are'} held back: a review takes on at most ${backlog} of those at a time.` : ''}`;
+  return `${head}\n\n${intro}\n\n${list}${data.held ? `\n\n---\n\n${data.held} more point${data.held === 1 ? '' : 's'} already in the codebase ${data.held === 1 ? 'is' : 'are'} held back: a review takes on at most ${backlog} of those at a time.` : ''}`;
 };
