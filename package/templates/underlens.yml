@@ -1,9 +1,5 @@
 name: Underlens
 
-# The triggers decide when PRs are reviewed: schedule reviews every open PR not
-# reviewed yet, at the cron's hour in UTC. Add opened and reopened to
-# pull_request to review each PR as it opens. Keep edited and closed: they act
-# on Agree and Disagree, and clean up after a closed PR.
 on:
   schedule:
     - cron: '0 3 * * *'
