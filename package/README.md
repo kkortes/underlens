@@ -21,9 +21,39 @@ gh workflow run underlens.yml     # checks every configured harness signs in
 - `underlens-quality-control.md`: the numbered, human-curated rules.
 - `.github/workflows/underlens.yml`: triggers, permissions, and one job that calls [`kkortes/underlens/.github/workflows/run.yml@v1`](https://github.com/kkortes/underlens/blob/main/.github/workflows/run.yml) with the harness secrets. The triggers you list pick when reviews run.
 
+```yaml
+name: Underlens
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  pull_request:
+    types: [edited, closed]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Run workflow PR of branch (leave empty for harness check)
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  Underlens:
+    uses: kkortes/underlens/.github/workflows/run.yml@v1
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+```
+
+The check reads **Underlens / Review and fix**. `runs-on` is the only input, and it defaults to `ubuntu-26.04`.
+
 Three parts of that file stay in your repo because GitHub won't let them move: the triggers, the `permissions` (a called workflow can't widen its caller's token, and a new repo's token is read-only), and the `secrets` (`secrets: inherit` only reaches workflows of the same owner). Forward only the secrets of the harnesses you use, if you like; validate names any that's missing.
 
-The called workflow is four steps, if you'd rather run them yourself: `actions/checkout@v4`, `oven-sh/setup-bun@v2`, then `bunx @ape-egg/underlens@1` with `GH_TOKEN: ${{ github.token }}` and each harness secret in its `env`. Check out the default branch (`ref: ${{ github.event.repository.default_branch }}`) so a PR can't rewrite the rules it's reviewed by. Underlens reads the `branch` input from the event and deepens a shallow checkout itself.
+The called workflow is four steps, if you'd rather run them yourself: `actions/checkout@v7`, `oven-sh/setup-bun@v2`, then `bunx @ape-egg/underlens@1` with `GH_TOKEN: ${{ github.token }}` and each harness secret in its `env`. Check out the default branch (`ref: ${{ github.event.repository.default_branch }}`) so a PR can't rewrite the rules it's reviewed by. Underlens reads the `branch` input from the event and deepens a shallow checkout itself.
 
 ## Harnesses
 

@@ -20,6 +20,7 @@ on:
 
 jobs:
   underlens:
+    name: Review and fix
     runs-on: ${{ inputs.runs-on }}
     concurrency:
       group: underlens-${{ github.event.pull_request.head.ref || github.event.inputs.branch || github.run_id }}
