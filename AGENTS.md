@@ -98,14 +98,15 @@ review unshallows it before it diffs.
   checks out the PR head as `underlens-pr-N`, runs reviewers in parallel and
   each settles on its own, then the judge on whichever answered. Only then
   does it rank the points (`pr`, then `combined`, then at most `backlog`
-  `existing`; the rest counts as `held`), retire leftovers of the last review,
-  and write one fix per point on `underlens-pr-N-rule-R-i` with a PR into
+  `existing`; the rest counts as `held`), replace the section with a stateless
+  note that fixes are being written, retire leftovers of the last review, and
+  write one fix per point on `underlens-pr-N-rule-R-i` with a PR into
   `underlens-pr-N`. Reports land in
   the job summary; the PR section is rewritten last and names each failed
   reviewer on one line. No reviewer answering, or the judge failing, fails
-  that PR: an earlier review stays, a PR without one gets a stateless failure
-  note. The scheduled loop moves on past a failed PR and throws at the end, so
-  any failure ends the run red.
+  that PR: an earlier review stays; a PR without one, or a run that fails
+  while writing fixes, gets a stateless failure note. The scheduled loop moves
+  on past a failed PR and throws at the end, so any failure ends the run red.
 - [section.js](package/src/section.js) — the PR section between
   `<!-- underlens -->` markers; its state rides in a base64 comment. A section
   with state means reviewed: the scheduled run skips it, and its headline reads
