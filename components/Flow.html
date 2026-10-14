@@ -54,9 +54,10 @@
       <step-no>3</step-no>
       <h3>Reviewers run side by side</h3>
       <p>
-        When the time comes, one agent per configured reviewer starts in CI and does a full review. Each reads the
-        quality document first, then the PR's diff, then as much of the codebase as it needs. Each one reports only
-        where the PR breaks a numbered rule. A reviewer that fails doesn't stop the others: the review goes on with
+        When the time comes, one agent per configured reviewer starts in CI and holds the whole codebase at the PR's
+        head to the quality document. The PR's diff tells it where each finding comes from: the PR, the PR together
+        with existing code, or code that was already there. Drift already in the codebase is taken on ten points at a
+        time, nearest the PR first. A reviewer that fails doesn't stop the others: the review goes on with
         those that answered, and the PR says which one failed and why.
       </p>
     </step-text>
@@ -77,7 +78,8 @@
       <h3>A judge turns them into points</h3>
       <p>
         One judge reads every report. Findings about the same rule in the same place become one point, however
-        differently they were worded. Any finding the code doesn't actually support is dropped. Each point is named
+        differently they were worded. Any finding the code doesn't actually support is dropped, and every origin is
+        checked against the diff. Each point is named
         after its rule and its place, so drift that stays reads the same on every review. With no report to read,
         or a judge that fails, the PR keeps its last review or says this one failed, and the run fails.
       </p>
@@ -121,7 +123,8 @@
       <h3>The PR's section becomes the report</h3>
       <p>
         The section in the original PR is replaced with a short status report: one block per point, naming the rule it
-        breaks, saying what its fix changed and linking to it. Each block has an Agree box and a Disagree box. Once
+        breaks, whether the drift came from this PR or was already in the codebase, what its fix changed and a link to
+        it. Each block has an Agree box and a Disagree box. Once
         reported, the PR isn't reviewed again unless you run the workflow for its branch.
       </p>
     </step-text>
@@ -133,18 +136,21 @@
           <p muted>Reviewed <code>9f3c2e1</code> with Claude and GPT, judged by Claude</p>
           <mock-point>
             <b>Rule 3: No <code>try</code>/<code>catch</code> that swallows an error.</b>
+            <i muted>Introduced by this PR.</i>
             <span>The catch in <code>charge</code> now rethrows, so a failed charge surfaces instead of reading as no charge.</span>
             <span>Fix: <u>#43</u></span>
             <b ok>Agreed</b>
           </mock-point>
           <mock-point>
             <b>Rule 1: No <code>console.log</code> in committed code.</b>
+            <i muted>Already in the codebase before this PR.</i>
             <span>Removed the debug log from the cart total.</span>
             <span>Fix: <u>#44</u></span>
             <mock-ticks><label><input type="checkbox" disabled /> Agree</label><label><input type="checkbox" disabled /> Disagree</label></mock-ticks>
           </mock-point>
           <mock-point>
             <b>Rule 4: No dependency for what a few lines would do.</b>
+            <i muted>Introduced by this PR.</i>
             <span>Dropped <code>left-pad</code> for a <code>padStart</code> call at its one use.</span>
             <span>Fix: <u>#45</u></span>
             <b muted>Disagreed</b>
