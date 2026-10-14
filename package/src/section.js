@@ -16,10 +16,11 @@ export const state = (body) => {
 
 const site = '[Underlens](https://underlens.korte.kim)';
 
-// A section with state is a finished review; without, it's an announcement or
-// a failure note.
+// A section with state is a finished review; without, it's an announcement, a
+// review still writing its fixes, or a failure note. An h2, so GitHub rules it
+// off underneath like eave's footer.
 export const write = (body, content, data) =>
-  `${(body ?? '').replace(fence, '').trimEnd()}\n\n<!-- underlens -->\n### ${data ? `This PR was reviewed through ${site}` : site}\n\n${content}\n${data ? `<!-- underlens:state ${Buffer.from(JSON.stringify(data)).toString('base64')} -->\n` : ''}<!-- /underlens -->`.trimStart();
+  `${(body ?? '').replace(fence, '').trimEnd()}\n\n<!-- underlens -->\n## ${data ? `This PR was reviewed through ${site}` : site}\n\n${content}\n${data ? `<!-- underlens:state ${Buffer.from(JSON.stringify(data)).toString('base64')} -->\n` : ''}<!-- /underlens -->`.trimStart();
 
 export const ticks = (body) =>
   Object.fromEntries([...(body ?? '').matchAll(/- \[[xX]\] (Agree|Disagree) <!-- (\d+) -->/g)].reverse().map(([, choice, fix]) => [fix, choice]));
@@ -58,9 +59,15 @@ export const failure = (pr, reason) =>
 
 const failures = (data) => (data.failed ?? []).map(({ spec, reason }) => `\n- ${label(spec)} failed: ${reason}`).join('');
 
+const reviewed = (pr, data) => `Reviewed \`${data.sha.slice(0, 7)}\` ${team(data)}, against ${rulesLink(pr)} · [run](${data.run})${failures(data)}`;
+
+// Written without state: its fixes aren't open yet, so there's nothing to tick.
+export const writing = (pr, data, count) =>
+  `${reviewed(pr, data)}\n\nJudged ${count} point${count === 1 ? '' : 's'}; their fixes are being written now, and the review lands here once the last one is open.`;
+
 export const report = (pr, data) => {
   const { points } = data;
-  const head = `Reviewed \`${data.sha.slice(0, 7)}\` ${team(data)}, against ${rulesLink(pr)} · [run](${data.run})${failures(data)}`;
+  const head = reviewed(pr, data);
   if (!points.length) return `${head}\n\nIt was judged that **nothing** in this PR and/or codebase is drifting from the quality control document.`;
   const list = points.map((point) => `${block(point)}${fixLink(point)}\n\n${outcome(point, data)}`).join('\n\n');
   return `${head}\n\n**Agree** merges a point's fix into \`${data.umbrella.branch}\`, which comes back to this PR as one PR of its own. **Disagree** closes the fix — the point returns on the next review for as long as its rule stands, so settle it for good by changing the quality document instead.\n\n${list}${data.held ? `\n\n${data.held} more point${data.held === 1 ? '' : 's'} already in the codebase ${data.held === 1 ? 'is' : 'are'} held back: a review takes on at most ${backlog} of those at a time.` : ''}`;

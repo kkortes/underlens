@@ -4,7 +4,7 @@ import config, { names } from './config.js';
 import { label } from './harnesses.js';
 import { backlog, fixPrompt, judgePrompt, json, reviewPrompt, run } from './agents.js';
 import { close, deleteBranch, openPull, openPulls, pull, pullsAllowed, pullsForbidden, runUrl, setBody, summary } from './github.js';
-import { announcement, block, failure, report, state, write } from './section.js';
+import { announcement, block, failure, report, state, write, writing } from './section.js';
 
 // Flat names: a slash would collide with a branch named plain `underlens`,
 // since git can't hold both `underlens` and `underlens/…`.
@@ -105,13 +105,15 @@ const examine = async (pr, cfg) => {
   summary(`Judged by ${names([cfg.judge])}: ${points.length} point${points.length === 1 ? '' : 's'}${held ? `, ${held} more already in the codebase held back` : ''}`);
 
   // Only now is there a review to replace the last one with: a run that fails
-  // before this leaves the earlier review and its fixes standing.
-  await retire(n);
+  // before this leaves the earlier review and its fixes standing. From here
+  // the section is this run's, so it never speaks for fixes retire closed.
+  // Re-read: the author may have edited the description during the run.
   const data = { sha: pr.headRefOid, run: runUrl, reviewers: Object.keys(reports), failed, judge: cfg.judge, umbrella: { branch: umbrellaOf(n), pr: null }, held, points: [] };
+  if (points.length) await setBody(n, write((await pull(n)).body, writing(pr, data, points.length)));
+  await retire(n);
   if (points.length) await $`git push -qf origin ${umbrellaOf(n)}`;
   for (const [i, point] of points.entries()) data.points.push(await fix(pr, point, i, cfg));
 
-  // Re-read: the author may have edited the description during the run.
   await setBody(n, write((await pull(n)).body, report(pr, data), data));
   return failed;
 };
@@ -120,9 +122,10 @@ const attempt = async (n) => {
   const [cfg, pr] = await Promise.all([config(), pull(n)]);
   if (!reviewable(pr)) throw new Error(`#${n} comes from a fork or from Underlens itself — Underlens reviews branches of this repository`);
   const failed = await examine(pr, cfg).catch(async (error) => {
-    // A PR without an earlier review says this one failed; one with an
-    // earlier review keeps it, and the red run says the rest.
-    if (!state(pr.body)) await setBody(n, write((await pull(n)).body, failure(pr, reason(error))));
+    // A section still holding an earlier review keeps it, and the red run says
+    // the rest; any other section says this run failed.
+    const { body } = await pull(n);
+    if (!state(body)) await setBody(n, write(body, failure(pr, reason(error))));
     throw error;
   });
   if (failed.length) throw new Error(`#${n} was judged without ${failed.map(({ spec, reason }) => `${spec} (${reason})`).join(', ')}`);
