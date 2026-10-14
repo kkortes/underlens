@@ -36,7 +36,7 @@
         Add <code>opened</code> and <code>reopened</code> to review each PR as it opens, or drop <code>schedule</code>
         to review only when you ask. Keep <code>edited</code> and <code>closed</code>: they act on Agree and Disagree,
         and clean up after a closed PR. Keep <code>workflow_dispatch</code> too: it reviews the PR of the branch you name
-        right away, or with its box ticked only checks every harness signs in. GitHub only hands secrets to a called workflow that you pass them to, one line
+        right away, or with the branch left empty only checks every harness signs in. GitHub only hands secrets to a called workflow that you pass them to, one line
         each; keep the lines for the harnesses you use.
       </p>
       <codie dark data-src="underlens.yml"></codie>
@@ -66,9 +66,9 @@ gh secret set CLAUDE_CODE_OAUTH_TOKEN</codie>
     <h3><step-no>4</step-no> Commit, then validate before a real run</h3>
     <p>
       Push the three files to your default branch, then run the workflow by hand: Actions → Underlens → Run workflow,
-      with "Only check harness availability" ticked, or from the repo folder:
+      with the branch left empty, or from the repo folder:
     </p>
-    <codie dark>gh workflow run underlens.yml -f check=true
+    <codie dark>gh workflow run underlens.yml
 gh run watch</codie>
     <p>
       Nothing gets reviewed. Each string in <code>reviewers</code> and <code>judge</code> gets its own row: Underlens

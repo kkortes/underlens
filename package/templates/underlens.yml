@@ -8,10 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: Run workflow PR of branch
-      check:
-        description: Only check harness availability
-        type: boolean
+        description: Run workflow PR of branch (leave empty for harness check)
 
 permissions:
   contents: write

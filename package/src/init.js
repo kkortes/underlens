@@ -20,5 +20,5 @@ Next:
   2. claude setup-token, then: gh secret set CLAUDE_CODE_OAUTH_TOKEN
      (other harnesses: https://underlens.korte.kim/#harnesses)
   3. Let workflows open PRs: gh api -X PUT repos/{owner}/{repo}/actions/permissions/workflow -F can_approve_pull_request_reviews=true
-  4. Commit the three files to your default branch, then: gh workflow run underlens.yml -f check=true`);
+  4. Commit the three files to your default branch, then: gh workflow run underlens.yml`);
 };
