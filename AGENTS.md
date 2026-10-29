@@ -14,8 +14,7 @@ the action itself.
   serves `/` from `pages/index.html` and `/templates/*` from `package/templates/`.
 - `bun run build` — `vibe compile` in SPA mode to `compiled/`, then copies
   `package/templates` to `compiled/templates` (what Vercel runs).
-- `cd package && npm publish` — publishes the package. The developer's to run,
-  never an agent's.
+- `bun publish:check` — `npm pack --dry-run` of `package/`, what would ship.
 
 ## Contributing and versioning
 
@@ -24,8 +23,16 @@ the action itself.
   it is that one.
 - The version lives in `package/package.json`. The root `package.json` is the
   private site and keeps its own.
-- Publishing is done by hand by the developer once the branch is merged to
-  `main`. An agent never publishes.
+- Publishing is done by the developer once the branch is merged to `main`, by
+  pushing a version tag. An agent never publishes and never pushes a version
+  tag.
+- The developer tags the merged release `git tag -a v<version>` and pushes it
+  with `git push --follow-tags`. A `v*.*.*` tag push runs
+  [.github/workflows/publish.yml](.github/workflows/publish.yml): it fails
+  unless the tag is `v` plus the version in `package/package.json`, then
+  publishes `package/` as public with `npm publish --provenance`, authenticated
+  by npm trusted publishing, so no npm token is kept anywhere. Pushes to `main`
+  and moving the floating `v1` tag publish nothing.
 
 ## Site
 

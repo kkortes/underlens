@@ -1,6 +1,6 @@
 {
   "name": "@ape-egg/underlens",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Scheduled code review against a human-curated quality document, on your own harness subscriptions — run from a GitHub workflow.",
   "type": "module",
   "bin": {
@@ -12,6 +12,11 @@
     "templates"
   ],
   "homepage": "https://underlens.korte.kim",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kkortes/underlens.git",
+    "directory": "package"
+  },
   "keywords": [
     "github-actions",
     "code-review",
