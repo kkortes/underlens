@@ -5,24 +5,24 @@
     "": {
       "name": "underlens",
       "dependencies": {
-        "@ape-egg/codie": "^0.2.0",
-        "@ape-egg/vibe": "^4.3.17",
+        "@ape-egg/codie": "^0.2.3",
+        "@ape-egg/vibe": "^4.3.24",
       },
       "devDependencies": {
-        "@ape-egg/vibe-compiler": "^4.3.17",
-        "@ape-egg/vite-plugin-vibe": "^0.5.2",
+        "@ape-egg/vibe-compiler": "^4.3.24",
+        "@ape-egg/vite-plugin-vibe": "^0.5.3",
         "vite": "^8.3.3",
       },
     },
   },
   "packages": {
-    "@ape-egg/codie": ["@ape-egg/codie@0.2.0", "", {}, "sha512-IhLXKiDoOBw+eBYwiHf+4ayoVW9xsccoP7zuD4ppfmI6vHhC+mfUg2f2QoTig0rdop5n9zB/RaGQdpcQj1VFdw=="],
+    "@ape-egg/codie": ["@ape-egg/codie@0.2.3", "", {}, "sha512-TmU9blpLYrIHYAcUKx+sMtXrK5V7JdepHqRVNym77scXLa5fDMy/w2x9Q4UYd2fZnDjrNtNzj4+YZO8/g2Ikcw=="],
 
-    "@ape-egg/vibe": ["@ape-egg/vibe@4.3.17", "", {}, "sha512-ESnMa93Oq7wXhdgsXYgcZKDPQibIKPsl4CtXjYnEHrXzapA71kCeSOWBUSvmB2fX+bCWweuBzi7SfbxNNQvbnw=="],
+    "@ape-egg/vibe": ["@ape-egg/vibe@4.3.24", "", {}, "sha512-Gq7EQL3SwHxUiuHLBMURchNKiUyv1z8qVA/7RfwxWqn8QO8pviuQsi3+0tgkZEQq4LOytXGE2D/dY7BSCcumqQ=="],
 
-    "@ape-egg/vibe-compiler": ["@ape-egg/vibe-compiler@4.3.17", "", { "bin": { "vibe": "bin/vibe-compile.js" } }, "sha512-Byio//Ae78vwzleQxwBjXdo1O3goCoxgRajhnqQtPUXfAymGgMVzSWhkYPGksJ15LMdWHKwTyoRlzV6GkhGRoA=="],
+    "@ape-egg/vibe-compiler": ["@ape-egg/vibe-compiler@4.3.24", "", { "bin": { "vibe": "bin/vibe-compile.js" } }, "sha512-bI0VnDMhtJPGyA/dee/9DSfO88+JHwhVTMQ9x3A8vzo0Xr9jtQSMctW+Uexkmvieok09Y5C+x1u0YmDONbAXIg=="],
 
-    "@ape-egg/vite-plugin-vibe": ["@ape-egg/vite-plugin-vibe@0.5.2", "", { "dependencies": { "acorn": "^8.0.0" }, "peerDependencies": { "@ape-egg/vibe": ">=4.3.0", "vite": ">=5.0.0" } }, "sha512-8w8KX+b0d8ka1xOXu/RjPTK7Y6APORSkxWKNjlV47fUjq/23tXxLJv+m+wLfC+1gJRuGZAvHqG9Hn68+Dsp6Og=="],
+    "@ape-egg/vite-plugin-vibe": ["@ape-egg/vite-plugin-vibe@0.5.3", "", { "dependencies": { "acorn": "^8.0.0" }, "peerDependencies": { "@ape-egg/vibe": ">=4.3.0", "vite": ">=5.0.0" } }, "sha512-CkSZagXJ2QArc7X/YYdmrQyzjH0JvK4WPFsr6ic/jGYjf0q5990pklyN6n01WX8j+0CG5UCRNRLFCoptOX63Mg=="],
 
     "@oxc-project/types": ["@oxc-project/types@0.153.0", "", {}, "sha512-jSNrRIyvPVLL5E1z/tS5zLAprosGz/FuI1PWwEOz59j3E4TTTzSpqKb/RDGqJhhW0QHYISGXxq582wGx6T11Tw=="],
 

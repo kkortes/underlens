@@ -10,12 +10,12 @@
     "publish:underlens": "bun publish:check && ./scripts/publish.sh"
   },
   "dependencies": {
-    "@ape-egg/codie": "^0.2.0",
-    "@ape-egg/vibe": "^4.3.17"
+    "@ape-egg/codie": "^0.2.3",
+    "@ape-egg/vibe": "^4.3.24"
   },
   "devDependencies": {
-    "@ape-egg/vibe-compiler": "^4.3.17",
-    "@ape-egg/vite-plugin-vibe": "^0.5.2",
+    "@ape-egg/vibe-compiler": "^4.3.24",
+    "@ape-egg/vite-plugin-vibe": "^0.5.3",
     "vite": "^8.3.3"
   },
   "vibe-compiler": {
